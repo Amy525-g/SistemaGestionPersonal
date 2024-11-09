@@ -3,13 +3,28 @@
     x:Class="SistemaGestionPersonal.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:SistemaGestionPersonal"
+    xmlns:views="clr-namespace:SistemaGestionPersonal.Views"
     Shell.FlyoutBehavior="Disabled"
-    Title="SistemaGestionPersonal">
+    Title="Sistema Gestion Personal">
 
     <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+        Title="Inicio de Usuarios"
+        ContentTemplate="{DataTemplate views:LoginPage}"
+        Route="LoginPage" />
+
+    <ShellContent
+         Title="Registro de Empleados"
+         ContentTemplate="{DataTemplate views:CreateUserPage}"
+         Route="CreateUserPage" />
+
+    <ShellContent 
+        Title="Vista de Administrador" 
+        ContentTemplate="{DataTemplate views:EmployeeListPage}" 
+        Route="EmployeeListPage" />
+    
+    <ShellContent 
+        Title="Vista de Empleado" 
+        ContentTemplate="{DataTemplate views:EmployeeHomePage}" 
+        Route="EmployeeHomePage" />
 
 </Shell>

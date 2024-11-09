@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SistemaGestionPersonal.Views.EmployeeListPage"
+             Title="EmployeeListPage">
+    
+    <StackLayout Padding="10">
+        <Label Text="Lista de Empleados" FontSize="Large" HorizontalOptions="Center" />
+        <!-- Botón para navegar a la página de creación de usuarios -->
+        <Button Text="Crear Nuevo Usuario" Clicked="OnCreateUserButtonClicked" />
+
+        <!-- Aquí puedes agregar una ListView o CollectionView para mostrar a los empleados -->
+        <ListView x:Name="EmployeeListView">
+            <!-- Define la plantilla para los elementos de la lista -->
+        </ListView>
+    </StackLayout>
+</ContentPage>
