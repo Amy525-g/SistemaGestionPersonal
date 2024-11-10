@@ -31,4 +31,10 @@ public partial class CreateUserPage : ContentPage
             await DisplayAlert("Error", "El usuario ya existe.", "OK");
         }
     }
+
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//EmployeeListPage");
+    }
+
 }

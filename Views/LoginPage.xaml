@@ -2,12 +2,20 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SistemaGestionPersonal.Views.LoginPage"
-             Title="LoginPage">
+             Title="Inicio de Sesion">
     
     <StackLayout Padding="10">
         <Entry x:Name="UsernameEntry" Placeholder="Nombre de Usuario" />
         <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />
-        <Button Text="Iniciar Sesión" Clicked="OnLoginButtonClicked" />
+
+        <Button Text="Iniciar Sesión"
+                Clicked="OnLoginButtonClicked"
+                BackgroundColor="#ADD8E6" 
+                TextColor="Black"
+                Margin="0,20,0,10"
+                HorizontalOptions="Center" />
+        
+        
     </StackLayout>
     
 </ContentPage>
