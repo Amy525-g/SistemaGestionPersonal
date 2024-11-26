@@ -10,7 +10,7 @@ public partial class CreateUserPage : ContentPage
     public CreateUserPage()
     {
         InitializeComponent();
-        _userController = new UserController(); // Dependiendo de tu configuración, puedes inyectar esto
+        _userController = new UserController(); 
     }
 
     private async void OnCreateUserButtonClicked(object sender, EventArgs e)

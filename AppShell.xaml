@@ -27,4 +27,24 @@
         ContentTemplate="{DataTemplate views:EmployeeHomePage}" 
         Route="EmployeeHomePage" />
 
+    <ShellContent 
+    Title="Vista para gestionar contratos" 
+    ContentTemplate="{DataTemplate views:ManageContractsPage}" 
+    Route="ManageContractsPage" />
+
+    <ShellContent 
+    Title="Vista para generar nómina" 
+    ContentTemplate="{DataTemplate views:GeneratePayrollPage}" 
+    Route="GeneratePayrollPage" />
+
+    <ShellContent 
+    Title="Evaluaciones de desempeño" 
+    ContentTemplate="{DataTemplate views:PerformanceEvaluationPage}" 
+    Route="PerformanceEvaluationPage" />
+
+    <ShellContent 
+    Title="Vista para generar informes" 
+    ContentTemplate="{DataTemplate views:GenerateReportsPage}" 
+    Route="GenerateReportsPage" />
+
 </Shell>

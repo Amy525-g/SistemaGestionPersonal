@@ -9,11 +9,11 @@ namespace SistemaGestionPersonal.Controller
 {
     public class UserController
     {
-        private readonly List<User> _users; // Sustituye esto por tu base de datos real
+        private readonly List<User> _users; 
 
         public UserController()
         {
-            // Inicializa tu almacenamiento de datos aquí (base de datos, lista en memoria, etc.)
+            // Inicializa tu almacenamiento de datos aquí (base de datos)
             _users = new List<User>();
         }
 

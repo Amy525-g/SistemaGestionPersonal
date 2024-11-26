@@ -12,7 +12,6 @@
                 <x:Array Type="{x:Type x:String}">
                     <x:String>Employee</x:String>
                     <x:String>Admin</x:String>
-                    <!-- Puedes incluir esto si deseas -->
                 </x:Array>
             </Picker.ItemsSource>
         </Picker>
