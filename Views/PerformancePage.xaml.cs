@@ -21,11 +21,22 @@ namespace SistemaGestionPersonal.Views
             _currentEmployeeId = employeeId;
 
             LoadEvaluations();
+            // Cargar todas las evaluaciones para la vista del administrador
+            var evaluations = _repository.EvaluacionesDesempeno.ToList();
+            EvaluationListView.ItemsSource = evaluations;
         }
 
         // Cargar evaluaciones del empleado actual
         private void LoadEvaluations()
         {
+
+            var currentUser = _repository.Users.FirstOrDefault(u => u.Username == "John"); // Cambiar según autenticación
+            if (currentUser == null || currentUser.Role.RoleName != "Employee")
+            {
+                DisplayAlert("Error", "No se encontró el empleado autenticado.", "OK");
+                return;
+            }
+
             var evaluations = _repository.EvaluacionesDesempeno
                 .Where(e => e.IdEmpleado == _currentEmployeeId)
                 .OrderByDescending(e => e.FechaEvaluacion)

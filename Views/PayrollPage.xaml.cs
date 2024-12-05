@@ -21,11 +21,22 @@ namespace SistemaGestionPersonal.Views
             _currentEmployeeId = employeeId;
 
             LoadPayroll();
+            // Cargar todas las nóminas
+            var payrolls = _repository.Nominas.ToList();
+            PayrollListView.ItemsSource = payrolls;
         }
 
         // Cargar nóminas del empleado actual
         private void LoadPayroll()
         {
+            // Obtener empleado autenticada
+            var currentUser = _repository.Users.FirstOrDefault(u => u.Username == "John"); // Cambia según autenticación
+            if (currentUser == null || currentUser.Role.RoleName != "Employee")
+            {
+                DisplayAlert("Error", "No se encontró el empleado autenticado.", "OK");
+                return;
+            }
+
             var payrolls = _repository.Nominas
                 .Where(n => n.IdEmpleado == _currentEmployeeId)
                 .OrderByDescending(n => n.FechaPago)

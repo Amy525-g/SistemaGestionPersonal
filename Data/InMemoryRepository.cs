@@ -48,6 +48,41 @@ namespace SistemaGestionPersonal.Data
             Nominas.Add(new Nomina { IdNomina = 1, IdEmpleado = 1, SalarioBruto = 2000, Deducciones = 200, SalarioNeto = 1800, FechaPago = DateTime.Now.AddMonths(-1), Empleado = Empleados[0] });
             Nominas.Add(new Nomina { IdNomina = 2, IdEmpleado = 2, SalarioBruto = 2500, Deducciones = 300, SalarioNeto = 2200, FechaPago = DateTime.Now.AddMonths(-1), Empleado = Empleados[1] });
 
+            // Agregar nóminas para el empleado con IdEmpleado = 1
+            Nominas.Add(new Nomina
+            {
+                IdNomina = 1,
+                IdEmpleado = 1,
+                SalarioBruto = 2000,
+                Deducciones = 150,
+                SalarioNeto = 1850,
+                FechaPago = DateTime.Now.AddMonths(-3),
+                Empleado = Empleados.First(e => e.IdEmpleado == 1)
+            });
+
+            Nominas.Add(new Nomina
+            {
+                IdNomina = 2,
+                IdEmpleado = 1,
+                SalarioBruto = 2000,
+                Deducciones = 200,
+                SalarioNeto = 1800,
+                FechaPago = DateTime.Now.AddMonths(-2),
+                Empleado = Empleados.First(e => e.IdEmpleado == 1)
+            });
+
+            Nominas.Add(new Nomina
+            {
+                IdNomina = 3,
+                IdEmpleado = 1,
+                SalarioBruto = 2000,
+                Deducciones = 250,
+                SalarioNeto = 1750,
+                FechaPago = DateTime.Now.AddMonths(-1),
+                Empleado = Empleados.First(e => e.IdEmpleado == 1)
+            });
+
+            // Agregar evaluaciones para el empleado con IdEmpleado = 1
             EvaluacionesDesempeno.Add(new EvaluacionDesempeno
             {
                 IdEvaluacion = 1,
@@ -61,13 +96,12 @@ namespace SistemaGestionPersonal.Data
             EvaluacionesDesempeno.Add(new EvaluacionDesempeno
             {
                 IdEvaluacion = 2,
-                IdEmpleado = 2,
+                IdEmpleado = 1,
                 FechaEvaluacion = DateTime.Now.AddMonths(-1),
                 Puntuacion = 9,
-                Comentarios = "Excelente rendimiento en el último proyecto",
-                Empleado = Empleados.First(e => e.IdEmpleado == 2)
+                Comentarios = "Gran capacidad de trabajo en equipo",
+                Empleado = Empleados.First(e => e.IdEmpleado == 1)
             });
-
 
         }
     }
