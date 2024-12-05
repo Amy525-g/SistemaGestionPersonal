@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SistemaGestionPersonal.Views.PayrollPage"
+             Title="Consultar Nómina">
+
+    <StackLayout Padding="20" VerticalOptions="FillAndExpand">
+        <Label Text="Historial de Nóminas" FontAttributes="Bold" FontSize="Large" HorizontalOptions="Center" Margin="0,0,0,20" />
+
+        <!-- Lista de nóminas -->
+        <ListView x:Name="PayrollListView" ItemSelected="OnPayrollSelected">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextCell Text="{Binding FechaPago, StringFormat='Fecha de Pago: {0:dd/MM/yyyy}'}" 
+                              Detail="{Binding SalarioNeto, StringFormat='Salario Neto: {0:C}'}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Botón para regresar -->
+        <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="Black" TextColor="White" Margin="0,20,0,0"/>
+    </StackLayout>
+</ContentPage>

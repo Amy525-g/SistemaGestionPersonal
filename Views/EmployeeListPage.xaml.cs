@@ -1,5 +1,3 @@
-using SistemaGestionPersonal.Views.employeListPage;
-
 namespace SistemaGestionPersonal.Views;
 
 public partial class EmployeeListPage : ContentPage
@@ -18,13 +16,13 @@ public partial class EmployeeListPage : ContentPage
     // Navegar a la vista para gestionar contratos
     private async void OnManageContractsButtonClicked(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync(nameof(ManageContractsPage));
+       await Shell.Current.GoToAsync(nameof(ManageContractsPage));
     }
 
     // Navegar a la vista para generar nómina
-    private async void OnGeneratePayrollButtonClicked(object sender, EventArgs e)
+    private async void OnManageNominasPage(object sender, EventArgs e)
     {
-        await Shell.Current.GoToAsync(nameof(GeneratePayrollPage));
+        await Shell.Current.GoToAsync(nameof(ManageNominasPage));
     }
 
     // Navegar a la vista para realizar evaluaciones de desempeño
@@ -37,6 +35,10 @@ public partial class EmployeeListPage : ContentPage
     private async void OnGenerateReportsButtonClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(GenerateReportsPage));
+    }
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//LoginPage");
     }
 }
 

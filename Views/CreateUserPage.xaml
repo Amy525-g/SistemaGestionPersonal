@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SistemaGestionPersonal.Views.CreateUserPage"
+             Title="Registro de Usuario">
+
+    <StackLayout Padding="20" VerticalOptions="FillAndExpand">
+        <!-- Formulario de creación de usuario -->
+        <Label Text="Crear Usuario" FontAttributes="Bold" FontSize="Medium" />
+        <Entry x:Name="UsernameEntry" Placeholder="Nombre de Usuario" />
+        <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" />
+        <Picker x:Name="RolePicker" Title="Seleccionar Rol">
+            <Picker.ItemsSource>
+                <x:Array Type="{x:Type x:String}">
+                    <x:String>Admin</x:String>
+                    <x:String>Employee</x:String>
+                </x:Array>
+            </Picker.ItemsSource>
+        </Picker>
+        <Button Text="Crear Usuario" Clicked="OnCreateUserClicked" BackgroundColor="#4CAF50" TextColor="White" />
+
+        <!-- Lista de usuarios -->
+        <Label Text="Lista de Usuarios" FontAttributes="Bold" FontSize="Medium" Margin="0,20,0,10" />
+        <ListView x:Name="UserListView" SelectionMode="Single" ItemSelected="OnUserSelected">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <TextCell Text="{Binding Username}" Detail="{Binding Role.RoleName}" />
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+
+        <!-- Botones para Editar y Eliminar -->
+        <Grid ColumnDefinitions="*,*,*"
+              HorizontalOptions="FillAndExpand"
+              Margin="0,10,0,0">
+            <Button Grid.Column="0" Text="Editar" Clicked="OnEditUserClicked" BackgroundColor="#FFC107" TextColor="White" HorizontalOptions="Center" WidthRequest="100" />
+            <Button Grid.Column="1" Text="Eliminar" Clicked="OnDeleteUserClicked" BackgroundColor="#F44336" TextColor="White" HorizontalOptions="Center" WidthRequest="100" />
+            <Button Grid.Column="2" Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="Black" TextColor="White" HorizontalOptions="Center" WidthRequest="100" />
+        </Grid>
+    </StackLayout>
+</ContentPage>

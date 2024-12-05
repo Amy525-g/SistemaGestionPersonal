@@ -13,7 +13,7 @@
         Route="LoginPage" />
 
     <ShellContent
-         Title="Registro de Empleados"
+         Title="Gestion de Usuarios"
          ContentTemplate="{DataTemplate views:CreateUserPage}"
          Route="CreateUserPage" />
 
@@ -21,30 +21,40 @@
         Title="Vista de Administrador" 
         ContentTemplate="{DataTemplate views:EmployeeListPage}" 
         Route="EmployeeListPage" />
-    
+
     <ShellContent 
         Title="Vista de Empleado" 
         ContentTemplate="{DataTemplate views:EmployeeHomePage}" 
         Route="EmployeeHomePage" />
 
     <ShellContent 
-    Title="Vista para gestionar contratos" 
-    ContentTemplate="{DataTemplate views:ManageContractsPage}" 
-    Route="ManageContractsPage" />
+        Title="Gestion de contratos" 
+        ContentTemplate="{DataTemplate views:ManageContractsPage}" 
+        Route="ManageContractsPage" />
 
     <ShellContent 
-    Title="Vista para generar nómina" 
-    ContentTemplate="{DataTemplate views:GeneratePayrollPage}" 
-    Route="GeneratePayrollPage" />
+        Title="Gestión de Nóminas" 
+        ContentTemplate="{DataTemplate views:ManageNominasPage}" 
+        Route="ManageNominasPage" />
 
     <ShellContent 
-    Title="Evaluaciones de desempeño" 
-    ContentTemplate="{DataTemplate views:PerformanceEvaluationPage}" 
-    Route="PerformanceEvaluationPage" />
+        Title="Evaluaciones de Desempeño" 
+        ContentTemplate="{DataTemplate views:PerformanceEvaluationPage}" 
+        Route="PerformanceEvaluationPage" />
 
     <ShellContent 
-    Title="Vista para generar informes" 
-    ContentTemplate="{DataTemplate views:GenerateReportsPage}" 
-    Route="GenerateReportsPage" />
+        Title="Generar Reportes" 
+        ContentTemplate="{DataTemplate views:GenerateReportsPage}" 
+        Route="GenerateReportsPage" />
+
+    <ShellContent 
+        Title="Visualizar nomina" 
+        ContentTemplate="{DataTemplate views:PayrollPage}" 
+        Route="PayrollPage" />
+
+    <ShellContent 
+        Title="Evaluacion de desempeño" 
+        ContentTemplate="{DataTemplate views:PerformancePage}" 
+        Route="PerformancePage" />
 
 </Shell>

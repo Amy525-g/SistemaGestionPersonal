@@ -1,42 +1,111 @@
-﻿using SistemaGestionPersonal.Models;
+﻿using SistemaGestionPersonal.Data;
+using SistemaGestionPersonal.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SistemaGestionPersonal.Controller
 {
     public class UserController
     {
-        private readonly List<User> _users; 
+        private readonly InMemoryRepository _repository;
 
-        public UserController()
+        public UserController(InMemoryRepository repository)
         {
-            // Inicializa tu almacenamiento de datos aquí (base de datos)
-            _users = new List<User>();
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
-        public async Task<bool> CreateUser(string username, string password, string role)
+        // Método para obtener todos los roles
+        public List<Role> GetRoles()
         {
-            // Comprobar si el usuario ya existe
-            if (_users.Any(u => u.Username == username))
+            return _repository.Roles.ToList();
+        }
+
+        // 1. Crear Usuario
+        public void AddUser(string username, string password, string roleName)
+        {
+            // Verifica que el rol exista
+            var role = _repository.Roles.FirstOrDefault(r => r.RoleName == roleName);
+            if (role == null)
             {
-                return false; // El usuario ya existe
+                throw new Exception("El rol especificado no existe.");
             }
 
-            // Crea un nuevo usuario (puedes usar un hash de contraseña aquí)
-            var newUser = new User
+            // Verifica si el nombre de usuario ya existe
+            if (_repository.Users.Any(u => u.Username == username))
             {
-                UserID = _users.Count + 1, // Generar un Id (puede ser diferente según tu base de datos)
+                throw new Exception("El nombre de usuario ya existe.");
+            }
+
+            // Crea un nuevo usuario
+            var user = new User
+            {
+                UserID = _repository.Users.Count + 1, // Generar un nuevo ID
                 Username = username,
-                PasswordHash = password, // Usa un hash seguro
+                PasswordHash = password, // Aquí podrías aplicar un hash de contraseña seguro
+                RoleID = role.RoleID,
                 Role = role
             };
 
-            _users.Add(newUser);
-            // Guarda en la base de datos (si estás usando EF Core, sería await _dbContext.Users.AddAsync(newUser); await _dbContext.SaveChangesAsync();)
-            return true;
+            _repository.Users.Add(user);
+        }
+
+        // 2. Leer Todos los Usuarios
+        public List<User> GetAllUsers()
+        {
+            // Devuelve la lista de usuarios con sus roles
+            return _repository.Users.ToList();
+        }
+
+        // 3. Leer un Usuario por ID
+        public User GetUserById(int userId)
+        {
+            // Busca el usuario por ID
+            var user = _repository.Users.FirstOrDefault(u => u.UserID == userId);
+            if (user == null)
+            {
+                throw new Exception("Usuario no encontrado.");
+            }
+
+            return user;
+        }
+
+        // 4. Actualizar Usuario
+        public void UpdateUser(int userId, string newUsername, string newPassword, string newRoleName)
+        {
+            // Busca el usuario
+            var user = _repository.Users.FirstOrDefault(u => u.UserID == userId);
+            if (user == null)
+            {
+                throw new Exception("Usuario no encontrado.");
+            }
+
+            // Busca el rol
+            var role = _repository.Roles.FirstOrDefault(r => r.RoleName == newRoleName);
+            if (role == null)
+            {
+                throw new Exception("El rol especificado no existe.");
+            }
+
+            // Actualiza los datos del usuario
+            user.Username = newUsername;
+            user.PasswordHash = newPassword; // Aquí también deberías aplicar un hash seguro
+            user.RoleID = role.RoleID;
+            user.Role = role;
+        }
+
+        // 5. Eliminar Usuario
+        public void DeleteUser(int userId)
+        {
+            // Busca el usuario
+            var user = _repository.Users.FirstOrDefault(u => u.UserID == userId);
+            if (user == null)
+            {
+                throw new Exception("Usuario no encontrado.");
+            }
+
+            // Elimina el usuario
+            _repository.Users.Remove(user);
         }
     }
 }

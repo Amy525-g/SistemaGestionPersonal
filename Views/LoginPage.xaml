@@ -3,28 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SistemaGestionPersonal.Views.LoginPage"
              Title="Inicio de Sesión">
-
-    <StackLayout Padding="10" VerticalOptions="CenterAndExpand" HorizontalOptions="Center">
-        <Label Text="Inicio de Sesión"
-               FontSize="24"
-               HorizontalOptions="Center"
-               Margin="0,0,0,20"/>
-        <Entry x:Name="UsernameEntry"
-               Placeholder="Nombre de Usuario"
-               HorizontalOptions="Center"
-               WidthRequest="250" />
-        <Entry x:Name="PasswordEntry"
-               Placeholder="Contraseña"
-               IsPassword="True"
-               HorizontalOptions="Center"
-               WidthRequest="250" />
-
-        <Button Text="Iniciar Sesión"
-                Clicked="OnLoginButtonClicked"
-                BackgroundColor="#ADD8E6" 
-                TextColor="Black"
-                Margin="0,20,0,10"
-                HorizontalOptions="Center"
-                WidthRequest="150"/>
+    <StackLayout Padding="20" VerticalOptions="CenterAndExpand" HorizontalOptions="Center">
+        <Label Text="Inicio de Sesión" FontSize="24" FontAttributes="Bold" HorizontalOptions="Center" Margin="0,0,0,20" />
+        <Entry x:Name="UsernameEntry" Placeholder="Nombre de Usuario" WidthRequest="250" />
+        <Entry x:Name="PasswordEntry" Placeholder="Contraseña" IsPassword="True" WidthRequest="250" />
+        <Button Text="Iniciar Sesión" Clicked="OnLoginButtonClicked" BackgroundColor="#ADD8E6" TextColor="Black" Margin="0,20,0,0" />
     </StackLayout>
 </ContentPage>

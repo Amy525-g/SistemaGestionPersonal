@@ -1,50 +1,69 @@
 using SistemaGestionPersonal.Controller;
-using SistemaGestionPersonal.Models;
+using SistemaGestionPersonal.Data;
+using System;
 
-namespace SistemaGestionPersonal.Views;
-
-public partial class LoginPage : ContentPage
+namespace SistemaGestionPersonal.Views
 {
-    private readonly LoginController _loginController;
-
-    public LoginPage()
+    public partial class LoginPage : ContentPage
     {
-        InitializeComponent();
-        _loginController = new LoginController();
+        private readonly LoginController _loginController;
 
-        // Establecer el enfoque en el campo de usuario cuando la página se cargue
-        UsernameEntry.Focus();
-    }
-
-    private async void OnLoginButtonClicked(object sender, EventArgs e)
-    {
-        string username = UsernameEntry.Text?.Trim();
-        string password = PasswordEntry.Text?.Trim();
-
-        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        public LoginPage()
         {
-            await DisplayAlert("Error", "Por favor, ingresa tanto el nombre de usuario como la contraseña.", "OK");
-            return;
+            InitializeComponent();
+
+            // Inicializar el repositorio en memoria y el controlador
+            var repository = new InMemoryRepository();
+            _loginController = new LoginController(repository);
         }
 
-        User user = _loginController.AuthenticateUser(username, password);
+        private async void OnLoginButtonClicked(object sender, EventArgs e)
+        {
+            try
+            {
+                string username = UsernameEntry.Text?.Trim();
+                string password = PasswordEntry.Text?.Trim();
 
-        if (user != null)
-        {
-            if (user.Role == "Admin")
-            {
-                await DisplayAlert("Bienvenido", "Has iniciado sesión como Administrador.", "OK");
-                await Shell.Current.GoToAsync(nameof(EmployeeListPage));
+                // Validación inicial
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+                {
+                    await DisplayAlert("Error", "Por favor, ingresa tanto el nombre de usuario como la contraseña.", "OK");
+                    return;
+                }
+
+                // Autenticación del usuario
+                var user = _loginController.AuthenticateUser(username, password);
+
+                if (user != null)
+                {
+                    // Verificar el rol del usuario
+                    if (user.Role.RoleName == "Admin")
+                    {
+                        await DisplayAlert("Éxito", $"Bienvenido, {user.Username}.", "OK");
+                        // Navegar a la página de administrador
+                        await Shell.Current.GoToAsync(nameof(EmployeeListPage));
+                    }
+                    else if (user.Role.RoleName == "Employee")
+                    {
+                        await DisplayAlert("Éxito", $"Bienvenido, {user.Username}.", "OK");
+                        // Navegar a la página de empleado
+                        await Shell.Current.GoToAsync(nameof(EmployeeHomePage));
+                    }
+                    else
+                    {
+                        await DisplayAlert("Error", "Rol no reconocido.", "OK");
+                    }
+                }
+                else
+                {
+                    await DisplayAlert("Error", "Nombre de usuario o contraseña incorrectos.", "OK");
+                }
             }
-            else if (user.Role == "Employee")
+            catch (Exception ex)
             {
-                await DisplayAlert("Bienvenido", "Has iniciado sesión como Empleado.", "OK");
-                await Shell.Current.GoToAsync(nameof(EmployeeHomePage));
+                // Capturar cualquier error y mostrar un mensaje
+                await DisplayAlert("Error", $"Ocurrió un error: {ex.Message}", "OK");
             }
-        }
-        else
-        {
-            await DisplayAlert("Error", "Nombre de usuario o contraseña incorrectos.", "OK");
         }
     }
 }

@@ -1,29 +1,29 @@
-﻿using SistemaGestionPersonal.Models;
+﻿using SistemaGestionPersonal.Data;
+using SistemaGestionPersonal.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SistemaGestionPersonal.Controller
 {
     public class LoginController
     {
-        private readonly List<User> _users; // Puedes usar tu base de datos aquí
+        private readonly InMemoryRepository _repository;
 
-        public LoginController()
+        public LoginController(InMemoryRepository repository)
         {
-            // Datos de ejemplo, reemplaza con tu base de datos o repositorio
-            _users = new List<User>
-            {
-                new User { UserID = 1, Username = "Amy Cherrez", PasswordHash = "1234", Role = "Admin" },
-                new User { UserID = 2, Username = "empleado", PasswordHash = "1234", Role = "Employee" }
-            };
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
         public User AuthenticateUser(string username, string password)
         {
-            return _users.FirstOrDefault(u => u.Username == username && u.PasswordHash == password);
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+            {
+                throw new ArgumentException("El nombre de usuario y la contraseña son obligatorios.");
+            }
+
+            var user = _repository.Users.FirstOrDefault(u => u.Username == username && u.PasswordHash == password);
+
+            return user ?? throw new UnauthorizedAccessException("Nombre de usuario o contraseña incorrectos.");
         }
     }
 }

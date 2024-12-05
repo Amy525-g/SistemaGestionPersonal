@@ -1,0 +1,29 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SistemaGestionPersonal.Views.GenerateReportsPage"
+             Title="Generar Reportes">
+
+    <StackLayout Padding="20" VerticalOptions="FillAndExpand">
+        <Label Text="Generar Reportes" FontAttributes="Bold" FontSize="Medium" />
+
+        <!-- Selección de tipo de reporte -->
+        <Picker x:Name="ReportTypePicker" Title="Seleccionar Tipo de Reporte">
+            <Picker.ItemsSource>
+                <x:Array Type="{x:Type x:String}">
+                    <x:String>Evaluaciones de Desempeño</x:String>
+                    <x:String>Nóminas</x:String>
+                    <x:String>Contratos</x:String>
+                </x:Array>
+            </Picker.ItemsSource>
+        </Picker>
+
+        <Button Text="Generar Reporte" Clicked="OnGenerateReportClicked" BackgroundColor="#4CAF50" TextColor="White" />
+
+        <!-- Vista previa del reporte -->
+        <Label Text="Vista Previa del Reporte" FontAttributes="Bold" FontSize="Medium" Margin="0,20,0,10" />
+        <Editor x:Name="ReportPreviewEditor" IsReadOnly="True" HeightRequest="200" />
+
+        <!-- Botón de regresar -->
+        <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="#ADD8E6" TextColor="Black" Margin="0,20,0,0" />
+    </StackLayout>
+</ContentPage>
