@@ -6,14 +6,18 @@ public partial class GenerateReportsPage : ContentPage
 {
     private readonly InMemoryRepository _repository;
 
-    public GenerateReportsPage() : this(new InMemoryRepository())
+    public GenerateReportsPage()
     {
+        InitializeComponent();
+        // Usar el repositorio global para garantizar la persistencia de datos
+        _repository = GlobalRepository.Repository;
     }
 
     public GenerateReportsPage(InMemoryRepository repository)
     {
         InitializeComponent();
-        _repository = repository;
+        // Usar el repositorio global, ignorando el parámetro del constructor
+        _repository = GlobalRepository.Repository;
     }
 
     // Generar Reporte
@@ -54,7 +58,9 @@ public partial class GenerateReportsPage : ContentPage
             .Select(e => $"Empleado: {e.Empleado.Nombre}, Puntuación: {e.Puntuacion}, Fecha: {e.FechaEvaluacion.ToShortDateString()}")
             .ToList();
 
-        return string.Join(Environment.NewLine, evaluations);
+        return evaluations.Any()
+            ? string.Join(Environment.NewLine, evaluations)
+            : "No hay evaluaciones de desempeño disponibles.";
     }
 
     // Generar reporte de nóminas
@@ -64,7 +70,9 @@ public partial class GenerateReportsPage : ContentPage
             .Select(n => $"Empleado: {n.Empleado.Nombre}, Salario Neto: {n.SalarioNeto}, Fecha de Pago: {n.FechaPago.ToShortDateString()}")
             .ToList();
 
-        return string.Join(Environment.NewLine, payrolls);
+        return payrolls.Any()
+            ? string.Join(Environment.NewLine, payrolls)
+            : "No hay nóminas disponibles.";
     }
 
     // Generar reporte de contratos
@@ -74,7 +82,9 @@ public partial class GenerateReportsPage : ContentPage
             .Select(c => $"Empleado: {c.Empleado.Nombre}, Tipo: {c.TipoContrato}, Desde: {c.FechaInicio.ToShortDateString()} Hasta: {c.FechaFin.ToShortDateString()}")
             .ToList();
 
-        return string.Join(Environment.NewLine, contracts);
+        return contracts.Any()
+            ? string.Join(Environment.NewLine, contracts)
+            : "No hay contratos disponibles.";
     }
 
     // Botón para regresar

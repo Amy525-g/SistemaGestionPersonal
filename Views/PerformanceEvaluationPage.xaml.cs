@@ -8,9 +8,9 @@ public partial class PerformanceEvaluationPage : ContentPage
 {
     private readonly EvaluationController _evaluationController;
     private readonly InMemoryRepository _repository;
-    private EvaluacionDesempeno _selectedEvaluation; // Variable para manejar la evaluación seleccionada
+    private EvaluacionDesempeno? _selectedEvaluation; // Variable para manejar la evaluación seleccionada
 
-    public PerformanceEvaluationPage() : this(new EvaluationController(new InMemoryRepository()), new InMemoryRepository())
+    public PerformanceEvaluationPage() : this(new EvaluationController(GlobalRepository.Repository), GlobalRepository.Repository)
     {
     }
 
@@ -18,7 +18,7 @@ public partial class PerformanceEvaluationPage : ContentPage
     {
         InitializeComponent();
         _evaluationController = evaluationController;
-        _repository = repository;
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
 
         LoadEmployees();
         LoadEvaluations();
@@ -27,7 +27,8 @@ public partial class PerformanceEvaluationPage : ContentPage
     // Cargar empleados en el Picker
     private void LoadEmployees()
     {
-        EmployeePicker.ItemsSource = _repository.Empleados.ToList();
+        var employees = _repository.Empleados.ToList();
+        EmployeePicker.ItemsSource = employees;
         EmployeePicker.ItemDisplayBinding = new Binding("Nombre");
     }
 
@@ -63,7 +64,8 @@ public partial class PerformanceEvaluationPage : ContentPage
     // Cargar Evaluaciones
     private void LoadEvaluations()
     {
-        EvaluationListView.ItemsSource = _repository.EvaluacionesDesempeno.ToList();
+        var evaluations = _repository.EvaluacionesDesempeno.ToList();
+        EvaluationListView.ItemsSource = evaluations;
     }
 
     // Seleccionar Evaluación

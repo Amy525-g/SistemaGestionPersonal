@@ -10,7 +10,7 @@ namespace SistemaGestionPersonal.Views
         private readonly InMemoryRepository _repository;
         private readonly int _currentEmployeeId;
 
-        public PayrollPage() : this(new InMemoryRepository(), 0) // Ajusta para pasar el ID del empleado actual.
+        public PayrollPage() : this(GlobalRepository.Repository, 0) // Pasa el ID del empleado actual desde la autenticación
         {
         }
 
@@ -21,31 +21,26 @@ namespace SistemaGestionPersonal.Views
             _currentEmployeeId = employeeId;
 
             LoadPayroll();
-            // Cargar todas las nóminas
-            var payrolls = _repository.Nominas.ToList();
-            PayrollListView.ItemsSource = payrolls;
         }
 
         // Cargar nóminas del empleado actual
         private void LoadPayroll()
         {
-            // Obtener empleado autenticada
-            var currentUser = _repository.Users.FirstOrDefault(u => u.Username == "John"); // Cambia según autenticación
-            if (currentUser == null || currentUser.Role.RoleName != "Employee")
-            {
-                DisplayAlert("Error", "No se encontró el empleado autenticado.", "OK");
-                return;
-            }
-
+            // Filtrar las nóminas por el empleado actual
             var payrolls = _repository.Nominas
                 .Where(n => n.IdEmpleado == _currentEmployeeId)
                 .OrderByDescending(n => n.FechaPago)
                 .ToList();
 
+            if (!payrolls.Any())
+            {
+                DisplayAlert("Información", "No se encontraron nóminas para el empleado actual.", "OK");
+            }
+
             PayrollListView.ItemsSource = payrolls;
         }
 
-        // Selección de nómina (opcional, puedes expandir esta funcionalidad)
+        // Mostrar detalles de la nómina seleccionada
         private async void OnPayrollSelected(object sender, SelectedItemChangedEventArgs e)
         {
             var selectedPayroll = e.SelectedItem as Nomina;

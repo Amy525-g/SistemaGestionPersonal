@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls;
+using SistemaGestionPersonal.Data;
 using System;
 
 namespace SistemaGestionPersonal.Views
@@ -8,6 +9,7 @@ namespace SistemaGestionPersonal.Views
         public EmployeeHomePage()
         {
             InitializeComponent();
+
         }
 
         // Navegar a la página de nómina

@@ -15,12 +15,11 @@ public partial class CreateUserPage : ContentPage
     {
         InitializeComponent();
 
-        // Inicializar el repositorio y controlador
-        var repository = new InMemoryRepository();
-        _userController = new UserController(repository);
+        // Usar el repositorio global para garantizar persistencia de datos
+        _userController = new UserController(GlobalRepository.Repository);
 
-        LoadRoles(); // Cargar roles al Picker
-        LoadUsers(); // Cargar usuarios al ListView
+        LoadRoles(); // Cargar roles en el Picker
+        LoadUsers(); // Cargar usuarios en el ListView
     }
 
     // Crear Usuario
@@ -141,9 +140,9 @@ public partial class CreateUserPage : ContentPage
         RolePicker.SelectedItem = null;
         _selectedUser = null;
     }
+
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync("//EmployeeListPage");
     }
-
 }

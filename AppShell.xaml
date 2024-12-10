@@ -57,4 +57,9 @@
         ContentTemplate="{DataTemplate views:PerformancePage}" 
         Route="PerformancePage" />
 
+    <ShellContent 
+    Title="Registro de Bonus" 
+    ContentTemplate="{DataTemplate views:BonusReportPage}" 
+    Route="BonusReportPage" />
+
 </Shell>

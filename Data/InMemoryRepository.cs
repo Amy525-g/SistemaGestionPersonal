@@ -15,6 +15,7 @@ namespace SistemaGestionPersonal.Data
         public List<Contrato> Contratos { get; set; } = new List<Contrato>();
         public List<Nomina> Nominas { get; set; } = new List<Nomina>();
         public List<EvaluacionDesempeno> EvaluacionesDesempeno { get; set; } = new List<EvaluacionDesempeno>();
+        public List<Bono> Bonos { get; set; } = new List<Bono>();
 
         public InMemoryRepository()
         {
@@ -103,6 +104,31 @@ namespace SistemaGestionPersonal.Data
                 Empleado = Empleados.First(e => e.IdEmpleado == 1)
             });
 
+            Bonos.Add(new Bono
+            {
+                IdBono = 1,
+                IdEmpleado = 1,
+                Categoria = "Sobresaliente",
+                Porcentaje = 20,
+                FechaAsignacion = DateTime.Now,
+                MontoTotal = 400, // Ejemplo: salario * porcentaje
+                Empleado = Empleados.FirstOrDefault(e => e.IdEmpleado == 1)
+            });
+
+            Bonos.Add(new Bono
+            {
+                IdBono = 2,
+                IdEmpleado = 2,
+                Categoria = "Bueno",
+                Porcentaje = 10,
+                FechaAsignacion = DateTime.Now,
+                MontoTotal = 250,
+                Empleado = Empleados.FirstOrDefault(e => e.IdEmpleado == 2)
+            });
+            Empleados.Add(new Empleado { IdEmpleado = 1, Nombre = "Juan", Apellido = "Perez" });
+            EvaluacionesDesempeno.Add(new EvaluacionDesempeno { IdEvaluacion = 1, IdEmpleado = 1, Puntuacion = 9, FechaEvaluacion = DateTime.Now.AddMonths(-1) });
+            Contratos.Add(new Contrato { IdContrato = 1, IdEmpleado = 1, FechaInicio = DateTime.Now.AddMonths(-3), FechaFin = DateTime.Now.AddMonths(9) });
+            Nominas.Add(new Nomina { IdNomina = 1, IdEmpleado = 1, SalarioBruto = 2000, Deducciones = 200 });
         }
     }
 }

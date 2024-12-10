@@ -18,6 +18,7 @@ namespace SistemaGestionPersonal
             Routing.RegisterRoute(nameof(GenerateReportsPage), typeof(GenerateReportsPage));
             Routing.RegisterRoute(nameof(PayrollPage), typeof(PayrollPage));
             Routing.RegisterRoute(nameof(PerformancePage), typeof(PerformancePage));
+            Routing.RegisterRoute(nameof(BonusReportPage), typeof(BonusReportPage));
         }
 
         protected override async void OnAppearing()

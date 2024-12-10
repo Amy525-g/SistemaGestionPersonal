@@ -10,7 +10,7 @@ namespace SistemaGestionPersonal.Views
         private readonly InMemoryRepository _repository;
         private readonly int _currentEmployeeId;
 
-        public PerformancePage() : this(new InMemoryRepository(), 0) // Ajusta el ID del empleado actual
+        public PerformancePage() : this(GlobalRepository.Repository, 0) // Ajusta el ID del empleado actual si es necesario
         {
         }
 
@@ -21,19 +21,14 @@ namespace SistemaGestionPersonal.Views
             _currentEmployeeId = employeeId;
 
             LoadEvaluations();
-            // Cargar todas las evaluaciones para la vista del administrador
-            var evaluations = _repository.EvaluacionesDesempeno.ToList();
-            EvaluationListView.ItemsSource = evaluations;
         }
 
         // Cargar evaluaciones del empleado actual
         private void LoadEvaluations()
         {
-
-            var currentUser = _repository.Users.FirstOrDefault(u => u.Username == "John"); // Cambiar según autenticación
-            if (currentUser == null || currentUser.Role.RoleName != "Employee")
+            if (_currentEmployeeId == 0)
             {
-                DisplayAlert("Error", "No se encontró el empleado autenticado.", "OK");
+                DisplayAlert("Error", "El ID del empleado no es válido.", "OK");
                 return;
             }
 
@@ -41,6 +36,11 @@ namespace SistemaGestionPersonal.Views
                 .Where(e => e.IdEmpleado == _currentEmployeeId)
                 .OrderByDescending(e => e.FechaEvaluacion)
                 .ToList();
+
+            if (!evaluations.Any())
+            {
+                DisplayAlert("Información", "No hay evaluaciones disponibles para este empleado.", "OK");
+            }
 
             EvaluationListView.ItemsSource = evaluations;
         }

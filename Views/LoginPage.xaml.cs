@@ -12,9 +12,8 @@ namespace SistemaGestionPersonal.Views
         {
             InitializeComponent();
 
-            // Inicializar el repositorio en memoria y el controlador
-            var repository = new InMemoryRepository();
-            _loginController = new LoginController(repository);
+            // Usar el repositorio global para asegurar la persistencia de datos
+            _loginController = new LoginController(GlobalRepository.Repository);
         }
 
         private async void OnLoginButtonClicked(object sender, EventArgs e)

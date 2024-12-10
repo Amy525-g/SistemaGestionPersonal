@@ -36,6 +36,11 @@ public partial class EmployeeListPage : ContentPage
     {
         await Shell.Current.GoToAsync(nameof(GenerateReportsPage));
     }
+
+    private async void OnBonusClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(BonusReportPage));
+    }
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync("//LoginPage");

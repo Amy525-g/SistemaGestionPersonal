@@ -5,7 +5,6 @@
              Title="Gestión de Contratos">
 
     <StackLayout Padding="20" VerticalOptions="FillAndExpand">
-        <!-- Formulario de creación de contratos -->
         <Label Text="Crear Contrato" FontAttributes="Bold" FontSize="Medium" />
         <Picker x:Name="EmployeePicker" Title="Seleccionar Empleado" />
         <DatePicker x:Name="StartDatePicker" />
@@ -20,30 +19,19 @@
         </Picker>
         <Button Text="Crear Contrato" Clicked="OnCreateContractClicked" BackgroundColor="#4CAF50" TextColor="White" />
 
-        <!-- Lista de contratos -->
         <Label Text="Lista de Contratos" FontAttributes="Bold" FontSize="Medium" Margin="0,20,0,10" />
         <ListView x:Name="ContractListView" SelectionMode="Single" ItemSelected="OnContractSelected">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <TextCell Text="{Binding Empleado.Nombre}" Detail="{Binding TipoContrato}" />
+                    <TextCell Text="{Binding EmpleadoNombre}" Detail="{Binding TipoContrato}" />
                 </DataTemplate>
             </ListView.ItemTemplate>
         </ListView>
 
-        <!-- Botones para Editar y Eliminar -->
         <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10" Margin="0,20,0,0">
-            <Button Text="Editar"
-                    Clicked="OnEditContractClicked"
-                    BackgroundColor="#FFC107"
-                    TextColor="White" />
-            <Button Text="Eliminar"
-                    Clicked="OnDeleteContractClicked"
-                    BackgroundColor="#F44336"
-                    TextColor="White" />
-            <Button Text="Regresar"
-                    Clicked="OnBackButtonClicked"
-                    BackgroundColor="Black"
-                    TextColor="White" />
+            <Button Text="Editar" Clicked="OnEditContractClicked" BackgroundColor="#FFC107" TextColor="White" />
+            <Button Text="Eliminar" Clicked="OnDeleteContractClicked" BackgroundColor="#F44336" TextColor="White" />
+            <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="Black" TextColor="White" />
         </StackLayout>
     </StackLayout>
 </ContentPage>

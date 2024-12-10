@@ -1,7 +1,6 @@
 using SistemaGestionPersonal.Controller;
 using SistemaGestionPersonal.Data;
 using SistemaGestionPersonal.Models;
-using static SistemaGestionPersonal.Data.InMemoryRepository;
 
 namespace SistemaGestionPersonal.Views;
 
@@ -13,7 +12,7 @@ public partial class ManageNominasPage : ContentPage
     private Nomina? _selectedNomina;
 
     // Constructor sin parámetros
-    public ManageNominasPage() : this(new NominaController(new InMemoryRepository()), new InMemoryRepository(), new UserController(new InMemoryRepository()))
+    public ManageNominasPage() : this(new NominaController(GlobalRepository.Repository), GlobalRepository.Repository, new UserController(GlobalRepository.Repository))
     {
     }
 
@@ -156,6 +155,7 @@ public partial class ManageNominasPage : ContentPage
         FechaPagoPicker.Date = DateTime.Now;
         _selectedNomina = null;
     }
+
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync("//EmployeeListPage");
