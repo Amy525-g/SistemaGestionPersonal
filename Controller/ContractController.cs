@@ -2,17 +2,19 @@
 using SistemaGestionPersonal.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using MySql.Data.MySqlClient;
 
 namespace SistemaGestionPersonal.Controller
 {
     public class ContractController
     {
-        private readonly InMemoryRepository _repository;
+        private readonly MySqlConnectionProvider _connectionProvider;
 
-        public ContractController(InMemoryRepository repository)
+        public ContractController(MySqlConnectionProvider connectionProvider)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _connectionProvider = connectionProvider ?? throw new ArgumentNullException(nameof(connectionProvider));
         }
 
         public void AddContract(int employeeId, DateTime startDate, DateTime endDate, string contractType)
@@ -20,61 +22,144 @@ namespace SistemaGestionPersonal.Controller
             if (startDate >= endDate)
                 throw new ArgumentException("La fecha de inicio debe ser anterior a la fecha de fin.");
 
-            var employee = _repository.Empleados.FirstOrDefault(e => e.IdEmpleado == employeeId);
-            if (employee == null)
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            // Verificar si el empleado existe
+            string employeeCheckQuery = "SELECT COUNT(*) FROM Empleado WHERE IdEmpleado = @IdEmpleado";
+            using var checkCmd = new MySqlCommand(employeeCheckQuery, connection);
+            checkCmd.Parameters.AddWithValue("@IdEmpleado", employeeId);
+
+            var employeeExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+            if (!employeeExists)
                 throw new KeyNotFoundException("Empleado no encontrado.");
 
-            var contract = new Contrato
-            {
-                IdContrato = _repository.Contratos.Count + 1,
-                IdEmpleado = employeeId,
-                FechaInicio = startDate,
-                FechaFin = endDate,
-                TipoContrato = contractType,
-                Empleado = employee
-            };
+            // Insertar el contrato
+            string insertQuery = @"
+                INSERT INTO Contrato (IdEmpleado, FechaInicio, FechaFin, TipoContrato)
+                VALUES (@IdEmpleado, @FechaInicio, @FechaFin, @TipoContrato)";
+            using var insertCmd = new MySqlCommand(insertQuery, connection);
+            insertCmd.Parameters.AddWithValue("@IdEmpleado", employeeId);
+            insertCmd.Parameters.AddWithValue("@FechaInicio", startDate);
+            insertCmd.Parameters.AddWithValue("@FechaFin", endDate);
+            insertCmd.Parameters.AddWithValue("@TipoContrato", contractType);
 
-            _repository.Contratos.Add(contract);
+            insertCmd.ExecuteNonQuery();
         }
 
         public List<Contrato> GetAllContracts()
         {
-            return _repository.Contratos;
+            var contracts = new List<Contrato>();
+
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = "SELECT * FROM Contrato";
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var contract = new Contrato
+                {
+                    IdContrato = reader.GetInt32("IdContrato"),
+                    IdEmpleado = reader.GetInt32("IdEmpleado"),
+                    FechaInicio = reader.GetDateTime("FechaInicio"),
+                    FechaFin = reader.GetDateTime("FechaFin"),
+                    TipoContrato = reader.GetString("TipoContrato")
+                };
+                contracts.Add(contract);
+            }
+
+            return contracts;
         }
 
         public Contrato GetContractById(int contractId)
         {
-            return _repository.Contratos.FirstOrDefault(c => c.IdContrato == contractId)
-                   ?? throw new KeyNotFoundException("Contrato no encontrado.");
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = "SELECT * FROM Contrato WHERE IdContrato = @IdContrato";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@IdContrato", contractId);
+
+            using var reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                return new Contrato
+                {
+                    IdContrato = reader.GetInt32("IdContrato"),
+                    IdEmpleado = reader.GetInt32("IdEmpleado"),
+                    FechaInicio = reader.GetDateTime("FechaInicio"),
+                    FechaFin = reader.GetDateTime("FechaFin"),
+                    TipoContrato = reader.GetString("TipoContrato")
+                };
+            }
+
+            throw new KeyNotFoundException("Contrato no encontrado.");
         }
 
         public void UpdateContract(int contractId, int employeeId, DateTime startDate, DateTime endDate, string contractType)
         {
-            var contract = _repository.Contratos.FirstOrDefault(c => c.IdContrato == contractId);
-            if (contract == null)
-                throw new KeyNotFoundException("Contrato no encontrado.");
-
-            var employee = _repository.Empleados.FirstOrDefault(e => e.IdEmpleado == employeeId);
-            if (employee == null)
-                throw new KeyNotFoundException("Empleado no encontrado.");
-
             if (startDate >= endDate)
                 throw new ArgumentException("La fecha de inicio debe ser anterior a la fecha de fin.");
 
-            contract.IdEmpleado = employeeId;
-            contract.FechaInicio = startDate;
-            contract.FechaFin = endDate;
-            contract.TipoContrato = contractType;
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
 
+            // Verificar si el contrato existe
+            string contractCheckQuery = "SELECT COUNT(*) FROM Contrato WHERE IdContrato = @IdContrato";
+            using var checkCmd = new MySqlCommand(contractCheckQuery, connection);
+            checkCmd.Parameters.AddWithValue("@IdContrato", contractId);
+
+            var contractExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+            if (!contractExists)
+                throw new KeyNotFoundException("Contrato no encontrado.");
+
+            // Verificar si el empleado existe
+            string employeeCheckQuery = "SELECT COUNT(*) FROM Empleado WHERE IdEmpleado = @IdEmpleado";
+            using var employeeCheckCmd = new MySqlCommand(employeeCheckQuery, connection);
+            employeeCheckCmd.Parameters.AddWithValue("@IdEmpleado", employeeId);
+
+            var employeeExists = Convert.ToInt32(employeeCheckCmd.ExecuteScalar()) > 0;
+            if (!employeeExists)
+                throw new KeyNotFoundException("Empleado no encontrado.");
+
+            // Actualizar el contrato
+            string updateQuery = @"
+                UPDATE Contrato
+                SET IdEmpleado = @IdEmpleado, FechaInicio = @FechaInicio, FechaFin = @FechaFin, TipoContrato = @TipoContrato
+                WHERE IdContrato = @IdContrato";
+            using var updateCmd = new MySqlCommand(updateQuery, connection);
+            updateCmd.Parameters.AddWithValue("@IdEmpleado", employeeId);
+            updateCmd.Parameters.AddWithValue("@FechaInicio", startDate);
+            updateCmd.Parameters.AddWithValue("@FechaFin", endDate);
+            updateCmd.Parameters.AddWithValue("@TipoContrato", contractType);
+            updateCmd.Parameters.AddWithValue("@IdContrato", contractId);
+
+            updateCmd.ExecuteNonQuery();
         }
 
         public void DeleteContract(int contractId)
         {
-            var contract = _repository.Contratos.FirstOrDefault(c => c.IdContrato == contractId);
-            if (contract == null)
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            // Verificar si el contrato existe
+            string checkQuery = "SELECT COUNT(*) FROM Contrato WHERE IdContrato = @IdContrato";
+            using var checkCmd = new MySqlCommand(checkQuery, connection);
+            checkCmd.Parameters.AddWithValue("@IdContrato", contractId);
+
+            var contractExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+            if (!contractExists)
                 throw new KeyNotFoundException("Contrato no encontrado.");
 
-            _repository.Contratos.Remove(contract);
+            // Eliminar el contrato
+            string deleteQuery = "DELETE FROM Contrato WHERE IdContrato = @IdContrato";
+            using var deleteCmd = new MySqlCommand(deleteQuery, connection);
+            deleteCmd.Parameters.AddWithValue("@IdContrato", contractId);
+
+            deleteCmd.ExecuteNonQuery();
         }
     }
 }

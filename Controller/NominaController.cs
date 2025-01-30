@@ -2,19 +2,20 @@
 using SistemaGestionPersonal.Models;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using MySql.Data.MySqlClient;
 
 namespace SistemaGestionPersonal.Controller
 {
     public class NominaController
     {
-        private readonly InMemoryRepository _repository;
+        private readonly MySqlConnectionProvider _connectionProvider;
 
-        public NominaController(InMemoryRepository repository)
+        public NominaController(MySqlConnectionProvider connectionProvider)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _connectionProvider = connectionProvider ?? throw new ArgumentNullException(nameof(connectionProvider));
         }
 
+        // Agregar una nueva nómina
         public void AddNomina(int empleadoId, decimal salarioBruto, decimal deducciones, DateTime fechaPago)
         {
             if (salarioBruto < deducciones)
@@ -22,67 +23,153 @@ namespace SistemaGestionPersonal.Controller
                 throw new ArgumentException("Las deducciones no pueden superar el salario bruto.");
             }
 
-            var empleado = _repository.Empleados.FirstOrDefault(e => e.IdEmpleado == empleadoId);
-            if (empleado == null)
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            // Verificar si el empleado existe
+            string employeeCheckQuery = "SELECT COUNT(*) FROM Empleado WHERE IdEmpleado = @IdEmpleado";
+            using var checkCmd = new MySqlCommand(employeeCheckQuery, connection);
+            checkCmd.Parameters.AddWithValue("@IdEmpleado", empleadoId);
+
+            var employeeExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+            if (!employeeExists)
             {
                 throw new KeyNotFoundException("Empleado no encontrado.");
             }
 
-            var nomina = new Nomina
-            {
-                IdNomina = _repository.Nominas.Count + 1,
-                IdEmpleado = empleadoId,
-                SalarioBruto = salarioBruto,
-                Deducciones = deducciones,
-                SalarioNeto = salarioBruto - deducciones,
-                FechaPago = fechaPago,
-                Empleado = empleado
-            };
+            // Insertar la nómina
+            string insertQuery = @"
+                INSERT INTO Nomina (IdEmpleado, SalarioBruto, Deducciones, SalarioNeto, FechaPago)
+                VALUES (@IdEmpleado, @SalarioBruto, @Deducciones, @SalarioNeto, @FechaPago)";
+            using var insertCmd = new MySqlCommand(insertQuery, connection);
+            insertCmd.Parameters.AddWithValue("@IdEmpleado", empleadoId);
+            insertCmd.Parameters.AddWithValue("@SalarioBruto", salarioBruto);
+            insertCmd.Parameters.AddWithValue("@Deducciones", deducciones);
+            insertCmd.Parameters.AddWithValue("@SalarioNeto", salarioBruto - deducciones);
+            insertCmd.Parameters.AddWithValue("@FechaPago", fechaPago);
 
-            _repository.Nominas.Add(nomina);
-
+            insertCmd.ExecuteNonQuery();
         }
 
+        // Obtener todas las nóminas
         public List<Nomina> GetAllNominas()
         {
-            return _repository.Nominas;
-        }
+            var nominas = new List<Nomina>();
 
-        public Nomina GetNominaById(int nominaId)
-        {
-            return _repository.Nominas.FirstOrDefault(n => n.IdNomina == nominaId)
-                   ?? throw new KeyNotFoundException("Nómina no encontrada.");
-        }
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
 
-        public void UpdateNomina(int nominaId, decimal salarioBruto, decimal deducciones, DateTime fechaPago)
-        {
-            var nomina = _repository.Nominas.FirstOrDefault(n => n.IdNomina == nominaId);
-            if (nomina == null)
+            string query = "SELECT * FROM Nomina";
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
             {
-                throw new KeyNotFoundException("Nómina no encontrada.");
+                var nomina = new Nomina
+                {
+                    IdNomina = reader.GetInt32("IdNomina"),
+                    IdEmpleado = reader.GetInt32("IdEmpleado"),
+                    SalarioBruto = reader.GetDecimal("SalarioBruto"),
+                    Deducciones = reader.GetDecimal("Deducciones"),
+                    SalarioNeto = reader.GetDecimal("SalarioNeto"),
+                    FechaPago = reader.GetDateTime("FechaPago")
+                };
+
+                nominas.Add(nomina);
             }
 
+            return nominas;
+        }
+
+        // Obtener una nómina por ID
+        public Nomina GetNominaById(int nominaId)
+        {
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = "SELECT * FROM Nomina WHERE IdNomina = @IdNomina";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@IdNomina", nominaId);
+
+            using var reader = command.ExecuteReader();
+
+            if (reader.Read())
+            {
+                return new Nomina
+                {
+                    IdNomina = reader.GetInt32("IdNomina"),
+                    IdEmpleado = reader.GetInt32("IdEmpleado"),
+                    SalarioBruto = reader.GetDecimal("SalarioBruto"),
+                    Deducciones = reader.GetDecimal("Deducciones"),
+                    SalarioNeto = reader.GetDecimal("SalarioNeto"),
+                    FechaPago = reader.GetDateTime("FechaPago")
+                };
+            }
+
+            throw new KeyNotFoundException("Nómina no encontrada.");
+        }
+
+        // Actualizar una nómina existente
+        public void UpdateNomina(int nominaId, decimal salarioBruto, decimal deducciones, DateTime fechaPago)
+        {
             if (salarioBruto < deducciones)
             {
                 throw new ArgumentException("Las deducciones no pueden superar el salario bruto.");
             }
 
-            nomina.SalarioBruto = salarioBruto;
-            nomina.Deducciones = deducciones;
-            nomina.SalarioNeto = salarioBruto - deducciones;
-            nomina.FechaPago = fechaPago;
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
 
-        }
+            // Verificar si la nómina existe
+            string checkQuery = "SELECT COUNT(*) FROM Nomina WHERE IdNomina = @IdNomina";
+            using var checkCmd = new MySqlCommand(checkQuery, connection);
+            checkCmd.Parameters.AddWithValue("@IdNomina", nominaId);
 
-        public void DeleteNomina(int nominaId)
-        {
-            var nomina = _repository.Nominas.FirstOrDefault(n => n.IdNomina == nominaId);
-            if (nomina == null)
+            var nominaExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+            if (!nominaExists)
             {
                 throw new KeyNotFoundException("Nómina no encontrada.");
             }
 
-            _repository.Nominas.Remove(nomina);
+            // Actualizar la nómina
+            string updateQuery = @"
+                UPDATE Nomina
+                SET SalarioBruto = @SalarioBruto, Deducciones = @Deducciones, 
+                    SalarioNeto = @SalarioNeto, FechaPago = @FechaPago
+                WHERE IdNomina = @IdNomina";
+            using var updateCmd = new MySqlCommand(updateQuery, connection);
+            updateCmd.Parameters.AddWithValue("@SalarioBruto", salarioBruto);
+            updateCmd.Parameters.AddWithValue("@Deducciones", deducciones);
+            updateCmd.Parameters.AddWithValue("@SalarioNeto", salarioBruto - deducciones);
+            updateCmd.Parameters.AddWithValue("@FechaPago", fechaPago);
+            updateCmd.Parameters.AddWithValue("@IdNomina", nominaId);
+
+            updateCmd.ExecuteNonQuery();
+        }
+
+        // Eliminar una nómina
+        public void DeleteNomina(int nominaId)
+        {
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            // Verificar si la nómina existe
+            string checkQuery = "SELECT COUNT(*) FROM Nomina WHERE IdNomina = @IdNomina";
+            using var checkCmd = new MySqlCommand(checkQuery, connection);
+            checkCmd.Parameters.AddWithValue("@IdNomina", nominaId);
+
+            var nominaExists = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
+            if (!nominaExists)
+            {
+                throw new KeyNotFoundException("Nómina no encontrada.");
+            }
+
+            // Eliminar la nómina
+            string deleteQuery = "DELETE FROM Nomina WHERE IdNomina = @IdNomina";
+            using var deleteCmd = new MySqlCommand(deleteQuery, connection);
+            deleteCmd.Parameters.AddWithValue("@IdNomina", nominaId);
+
+            deleteCmd.ExecuteNonQuery();
         }
     }
 }

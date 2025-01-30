@@ -2,67 +2,65 @@ using SistemaGestionPersonal.Controller;
 using SistemaGestionPersonal.Data;
 using System;
 
-namespace SistemaGestionPersonal.Views
+namespace SistemaGestionPersonal.Views;
+
+public partial class LoginPage : ContentPage
 {
-    public partial class LoginPage : ContentPage
+    private readonly LoginController _loginController;
+
+    public LoginPage()
     {
-        private readonly LoginController _loginController;
+        InitializeComponent();
+        // Inicializar el controlador con MySQL
+        _loginController = new LoginController(new MySqlConnectionProvider());
+    }
 
-        public LoginPage()
+    private async void OnLoginButtonClicked(object sender, EventArgs e)
+    {
+        try
         {
-            InitializeComponent();
+            string username = UsernameEntry.Text?.Trim();
+            string password = PasswordEntry.Text?.Trim();
 
-            // Usar el repositorio global para asegurar la persistencia de datos
-            _loginController = new LoginController(GlobalRepository.Repository);
-        }
-
-        private async void OnLoginButtonClicked(object sender, EventArgs e)
-        {
-            try
+            // Validación inicial
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
             {
-                string username = UsernameEntry.Text?.Trim();
-                string password = PasswordEntry.Text?.Trim();
+                await DisplayAlert("Error", "Por favor, ingresa tanto el nombre de usuario como la contraseña.", "OK");
+                return;
+            }
 
-                // Validación inicial
-                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            // Autenticación del usuario
+            var user = _loginController.AuthenticateUser(username, password);
+
+            if (user != null)
+            {
+                // Verificar el rol del usuario
+                if (user.Role.RoleName == "Admin")
                 {
-                    await DisplayAlert("Error", "Por favor, ingresa tanto el nombre de usuario como la contraseña.", "OK");
-                    return;
+                    await DisplayAlert("Éxito", $"Bienvenido, {user.Username}.", "OK");
+                    // Navegar a la página de administrador
+                    await Shell.Current.GoToAsync("//EmployeeListPage");
                 }
-
-                // Autenticación del usuario
-                var user = _loginController.AuthenticateUser(username, password);
-
-                if (user != null)
+                else if (user.Role.RoleName == "Employee")
                 {
-                    // Verificar el rol del usuario
-                    if (user.Role.RoleName == "Admin")
-                    {
-                        await DisplayAlert("Éxito", $"Bienvenido, {user.Username}.", "OK");
-                        // Navegar a la página de administrador
-                        await Shell.Current.GoToAsync(nameof(EmployeeListPage));
-                    }
-                    else if (user.Role.RoleName == "Employee")
-                    {
-                        await DisplayAlert("Éxito", $"Bienvenido, {user.Username}.", "OK");
-                        // Navegar a la página de empleado
-                        await Shell.Current.GoToAsync(nameof(EmployeeHomePage));
-                    }
-                    else
-                    {
-                        await DisplayAlert("Error", "Rol no reconocido.", "OK");
-                    }
+                    await DisplayAlert("Éxito", $"Bienvenido, {user.Username}.", "OK");
+                    // Navegar a la página de empleado
+                    await Shell.Current.GoToAsync("//EmployeeHomePage");
                 }
                 else
                 {
-                    await DisplayAlert("Error", "Nombre de usuario o contraseña incorrectos.", "OK");
+                    await DisplayAlert("Error", "Rol no reconocido.", "OK");
                 }
             }
-            catch (Exception ex)
+            else
             {
-                // Capturar cualquier error y mostrar un mensaje
-                await DisplayAlert("Error", $"Ocurrió un error: {ex.Message}", "OK");
+                await DisplayAlert("Error", "Nombre de usuario o contraseña incorrectos.", "OK");
             }
+        }
+        catch (Exception ex)
+        {
+            // Capturar cualquier error y mostrar un mensaje
+            await DisplayAlert("Error", $"Ocurrió un error: {ex.Message}", "OK");
         }
     }
 }

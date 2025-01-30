@@ -4,40 +4,48 @@
              x:Class="SistemaGestionPersonal.Views.ManageNominasPage"
              Title="Gestión de Nóminas">
 
-    <StackLayout Padding="20" VerticalOptions="FillAndExpand">
-        <!-- Formulario de creación de nómina -->
-        <Label Text="Crear Nómina" FontAttributes="Bold" FontSize="Medium" />
+    <ScrollView>
+        <StackLayout Padding="20">
+            <!-- Formulario de creación de nómina -->
+            <Label Text="Crear Nómina" FontAttributes="Bold" FontSize="Medium" />
 
-        <Label Text="Seleccionar Empleado" />
-        <Picker x:Name="EmployeePicker" />
+            <Label Text="Seleccionar Empleado" />
+            <Picker x:Name="EmployeePicker" />
 
-        <Label Text="Salario Bruto" />
-        <Entry x:Name="SalarioBrutoEntry" Placeholder="Salario Bruto" Keyboard="Numeric" />
+            <Label Text="Salario Bruto" />
+            <Entry x:Name="SalarioBrutoEntry" Placeholder="Salario Bruto" Keyboard="Numeric" />
 
-        <Label Text="Deducciones" />
-        <Entry x:Name="DeduccionesEntry" Placeholder="Deducciones" Keyboard="Numeric" />
+            <Label Text="Deducciones" />
+            <Entry x:Name="DeduccionesEntry" Placeholder="Deducciones" Keyboard="Numeric" />
 
-        <Label Text="Fecha de Pago" />
-        <DatePicker x:Name="FechaPagoPicker" />
+            <Label Text="Fecha de Pago" />
+            <DatePicker x:Name="FechaPagoPicker" />
 
-        <Button Text="Crear Nómina" Clicked="OnCreateNominaClicked" BackgroundColor="#4CAF50" TextColor="White" />
+            <Button Text="Crear Nómina" Clicked="OnCreateNominaClicked" BackgroundColor="#4CAF50" TextColor="White" />
 
-        <!-- Lista de nóminas -->
-        <Label Text="Lista de Nóminas" FontAttributes="Bold" FontSize="Medium" Margin="0,20,0,10" />
-        <ListView x:Name="NominaListView" SelectionMode="Single" ItemSelected="OnNominaSelected">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextCell Text="{Binding Empleado.Nombre}" Detail="{Binding SalarioNeto}" />
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            <!-- Lista de nóminas -->
+            <Label Text="Lista de Nóminas" FontAttributes="Bold" FontSize="Medium" Margin="0,20,0,10" />
+            <ListView x:Name="NominaListView" SelectionMode="Single" ItemSelected="OnNominaSelected">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <StackLayout Orientation="Vertical" Padding="10">
+                                <Label Text="{Binding EmpleadoNombre}" FontAttributes="Bold" />
+                                <Label Text="{Binding SalarioNeto, StringFormat='Salario Neto: {0:C}'}" />
+                                <Label Text="{Binding FechaPago, StringFormat='Fecha de Pago: {0:dd/MM/yyyy}'}" />
+                            </StackLayout>
+                        </ViewCell>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <!-- Botones para Editar y Eliminar -->
-        <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10" Margin="0,20,0,0">
-            <Button Text="Editar" Clicked="OnEditNominaClicked" BackgroundColor="#FFC107" TextColor="White" />
-            <Button Text="Eliminar" Clicked="OnDeleteNominaClicked" BackgroundColor="#F44336" TextColor="White" />
-            <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="Black" TextColor="White" />
 
+            <!-- Botones para Editar y Eliminar -->
+            <StackLayout Orientation="Horizontal" HorizontalOptions="Center" Spacing="10" Margin="0,20,0,0">
+                <Button Text="Editar" Clicked="OnEditNominaClicked" BackgroundColor="#FFC107" TextColor="White" />
+                <Button Text="Eliminar" Clicked="OnDeleteNominaClicked" BackgroundColor="#F44336" TextColor="White" />
+                <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="Black" TextColor="White" />
+            </StackLayout>
         </StackLayout>
-    </StackLayout>
+    </ScrollView>
 </ContentPage>

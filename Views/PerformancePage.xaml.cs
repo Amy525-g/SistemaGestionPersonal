@@ -1,71 +1,91 @@
 using SistemaGestionPersonal.Data;
-using SistemaGestionPersonal.Models;
+using MySql.Data.MySqlClient;
 using System;
-using System.Linq;
+using System.Collections.Generic;
+using SistemaGestionPersonal.Models;
 
-namespace SistemaGestionPersonal.Views
+namespace SistemaGestionPersonal.Views;
+
+public partial class PerformancePage : ContentPage
 {
-    public partial class PerformancePage : ContentPage
+    private readonly MySqlConnectionProvider _connectionProvider;
+    private readonly int _currentEmployeeId;
+
+    public PerformancePage(int employeeId)
     {
-        private readonly InMemoryRepository _repository;
-        private readonly int _currentEmployeeId;
+        InitializeComponent();
+        _connectionProvider = new MySqlConnectionProvider();
+        _currentEmployeeId = employeeId;
 
-        public PerformancePage() : this(GlobalRepository.Repository, 0) // Ajusta el ID del empleado actual si es necesario
+        LoadEvaluations();
+    }
+
+    // Cargar evaluaciones del empleado actual
+    private void LoadEvaluations()
+    {
+        try
         {
-        }
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
 
-        public PerformancePage(InMemoryRepository repository, int employeeId)
-        {
-            InitializeComponent();
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _currentEmployeeId = employeeId;
+            string query = @"
+            SELECT FechaEvaluacion, Puntuacion, Comentarios
+            FROM EvaluacionDesempeno
+            WHERE IdEmpleado = @IdEmpleado
+            ORDER BY FechaEvaluacion DESC";
 
-            LoadEvaluations();
-        }
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@IdEmpleado", _currentEmployeeId);
 
-        // Cargar evaluaciones del empleado actual
-        private void LoadEvaluations()
-        {
-            if (_currentEmployeeId == 0)
+            using var reader = command.ExecuteReader();
+
+            var evaluations = new List<EvaluationData>();
+            while (reader.Read())
             {
-                DisplayAlert("Error", "El ID del empleado no es válido.", "OK");
-                return;
+                evaluations.Add(new EvaluationData
+                {
+                    FechaEvaluacion = reader.GetDateTime("FechaEvaluacion"),
+                    Puntuacion = reader.GetInt32("Puntuacion"),
+                    Comentarios = reader.GetString("Comentarios")
+                });
             }
 
-            var evaluations = _repository.EvaluacionesDesempeno
-                .Where(e => e.IdEmpleado == _currentEmployeeId)
-                .OrderByDescending(e => e.FechaEvaluacion)
-                .ToList();
-
-            if (!evaluations.Any())
+            if (evaluations.Count == 0)
             {
                 DisplayAlert("Información", "No hay evaluaciones disponibles para este empleado.", "OK");
             }
 
             EvaluationListView.ItemsSource = evaluations;
         }
-
-        // Mostrar detalles de la evaluación seleccionada
-        private async void OnEvaluationSelected(object sender, SelectedItemChangedEventArgs e)
+        catch (MySqlException ex)
         {
-            var selectedEvaluation = e.SelectedItem as EvaluacionDesempeno;
-            if (selectedEvaluation != null)
-            {
-                await DisplayAlert("Detalles de Evaluación",
-                    $"Fecha: {selectedEvaluation.FechaEvaluacion:dd/MM/yyyy}\n" +
-                    $"Puntuación: {selectedEvaluation.Puntuacion}\n" +
-                    $"Comentarios: {selectedEvaluation.Comentarios ?? "Sin comentarios"}",
-                    "OK");
-
-                // Deseleccionar la evaluación después de mostrar los detalles
-                EvaluationListView.SelectedItem = null;
-            }
+            DisplayAlert("Error", $"Error al cargar evaluaciones: {ex.Message}", "OK");
         }
-
-        // Botón para regresar
-        private async void OnBackButtonClicked(object sender, EventArgs e)
+        catch (Exception ex)
         {
-            await Shell.Current.GoToAsync("//EmployeeHomePage");
+            DisplayAlert("Error", $"Ocurrió un error inesperado: {ex.Message}", "OK");
         }
     }
+
+
+    // Mostrar detalles de la evaluación seleccionada
+    private async void OnEvaluationSelected(object sender, SelectedItemChangedEventArgs e)
+    {
+        if (e.SelectedItem is not EvaluationData selectedEvaluation) return;
+
+        await DisplayAlert("Detalles de Evaluación",
+            $"Fecha: {selectedEvaluation.FechaEvaluacion:dd/MM/yyyy}\n" +
+            $"Puntuación: {selectedEvaluation.Puntuacion}\n" +
+            $"Comentarios: {selectedEvaluation.Comentarios}",
+            "OK");
+
+        EvaluationListView.SelectedItem = null;
+    }
+
+    // Botón para regresar
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync("//EmployeeHomePage");
+    }
 }
+

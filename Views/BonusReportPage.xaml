@@ -3,21 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SistemaGestionPersonal.Views.BonusReportPage"
              Title="Bonos Calculados">
-    <StackLayout Padding="20">
-        <Label Text="Bonos Calculados" FontSize="Large" FontAttributes="Bold" HorizontalOptions="Center" />
+    <ScrollView>
+        <StackLayout Padding="20">
+            <Label Text="Bonos Calculados" FontSize="Large" FontAttributes="Bold" HorizontalOptions="Center" />
 
-        <ListView x:Name="BonusesListView" ItemSelected="OnBonusSelected">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextCell Text="{Binding NombreEmpleado}" Detail="{Binding Detalle}" />
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            <ListView x:Name="BonusesListView" ItemSelected="OnBonusSelected">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextCell Text="{Binding NombreEmpleado}" Detail="{Binding Detalle}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <Button Text="Regresar" 
-                Clicked="OnBackButtonClicked" 
-                BackgroundColor="Black" 
-                TextColor="White" 
-                Margin="0,20,0,0" />
-    </StackLayout>
+            <Button Text="Regresar" 
+                    Clicked="OnBackButtonClicked" 
+                    BackgroundColor="Black" 
+                    TextColor="White" 
+                    Margin="0,20,0,0" />
+        </StackLayout>
+    </ScrollView>
 </ContentPage>

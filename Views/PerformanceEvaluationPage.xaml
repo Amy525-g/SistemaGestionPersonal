@@ -3,35 +3,37 @@
              x:Class="SistemaGestionPersonal.Views.PerformanceEvaluationPage"
              Title="Evaluaciones de Desempeño">
 
-    <StackLayout Padding="20" VerticalOptions="FillAndExpand">
-        <!-- Formulario de evaluación -->
-        <Label Text="Realizar Evaluación de Desempeño" FontAttributes="Bold" FontSize="Medium" />
+    <ScrollView>
+        <StackLayout Padding="20" VerticalOptions="FillAndExpand">
+            <!-- Formulario de evaluación -->
+            <Label Text="Realizar Evaluación de Desempeño" FontAttributes="Bold" FontSize="Medium" />
 
-        <Label Text="Seleccionar Empleado" />
-        <Picker x:Name="EmployeePicker" />
+            <Label Text="Seleccionar Empleado" />
+            <Picker x:Name="EmployeePicker" />
 
-        <Label Text="Fecha de Evaluación" />
-        <DatePicker x:Name="EvaluationDatePicker" />
+            <Label Text="Fecha de Evaluación" />
+            <DatePicker x:Name="EvaluationDatePicker" />
 
-        <Label Text="Puntuación (1 a 10)" />
-        <Slider x:Name="ScoreSlider" Minimum="1" Maximum="10" Value="5" />
+            <Label Text="Puntuación (1 a 10)" />
+            <Slider x:Name="ScoreSlider" Minimum="1" Maximum="10" Value="5" />
 
-        <Label Text="Comentarios" />
-        <Editor x:Name="CommentsEditor" HeightRequest="100" />
+            <Label Text="Comentarios" />
+            <Editor x:Name="CommentsEditor" HeightRequest="100" />
 
-        <Button Text="Guardar Evaluación" Clicked="OnSaveEvaluationClicked" BackgroundColor="#4CAF50" TextColor="White" />
+            <Button Text="Guardar Evaluación" Clicked="OnSaveEvaluationClicked" BackgroundColor="#4CAF50" TextColor="White" />
 
-        <!-- Lista de evaluaciones -->
-        <Label Text="Lista de Evaluaciones" FontAttributes="Bold" FontSize="Medium" Margin="0,20,0,10" />
-        <ListView x:Name="EvaluationListView" SelectionMode="Single" ItemSelected="OnEvaluationSelected">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextCell Text="{Binding Empleado.Nombre}" Detail="{Binding Puntuacion}" />
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            <!-- Lista de evaluaciones -->
+            <Label Text="Lista de Evaluaciones" FontAttributes="Bold" FontSize="Medium" Margin="0,20,0,10" />
+            <ListView x:Name="EvaluationListView" SelectionMode="Single" ItemSelected="OnEvaluationSelected">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextCell Text="{Binding Empleado.Nombre}" Detail="{Binding Puntuacion}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <!-- Botón de regresar -->
-        <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="#ADD8E6" TextColor="Black" Margin="0,20,0,0" />
-    </StackLayout>
+            <!-- Botón de regresar -->
+            <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="#ADD8E6" TextColor="Black" Margin="0,20,0,0" />
+        </StackLayout>
+    </ScrollView>
 </ContentPage>

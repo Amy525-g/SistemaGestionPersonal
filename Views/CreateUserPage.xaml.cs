@@ -15,8 +15,8 @@ public partial class CreateUserPage : ContentPage
     {
         InitializeComponent();
 
-        // Usar el repositorio global para garantizar persistencia de datos
-        _userController = new UserController(GlobalRepository.Repository);
+        // Instanciar el controlador con conexión MySQL
+        _userController = new UserController(new MySqlConnectionProvider());
 
         LoadRoles(); // Cargar roles en el Picker
         LoadUsers(); // Cargar usuarios en el ListView
@@ -51,25 +51,41 @@ public partial class CreateUserPage : ContentPage
     // Cargar Usuarios en el ListView
     private void LoadUsers()
     {
-        var users = _userController.GetAllUsers();
-        UserListView.ItemsSource = users;
+        try
+        {
+            var users = _userController.GetAllUsers();
+            UserListView.ItemsSource = users; // Cargar directamente la lista de usuarios
+        }
+        catch (Exception ex)
+        {
+            DisplayAlert("Error", $"Error al cargar usuarios: {ex.Message}", "OK");
+        }
     }
 
     // Cargar Roles en el Picker
     private void LoadRoles()
     {
-        var roles = _userController.GetRoles().Select(r => r.RoleName).ToList();
-        RolePicker.ItemsSource = roles;
+        try
+        {
+            var roles = _userController.GetRoles();
+            RolePicker.ItemsSource = roles.Select(r => r.RoleName).ToList(); // Cargar roles como strings
+        }
+        catch (Exception ex)
+        {
+            DisplayAlert("Error", $"Error al cargar roles: {ex.Message}", "OK");
+        }
     }
 
     // Seleccionar Usuario
     private void OnUserSelected(object sender, SelectedItemChangedEventArgs e)
     {
+        if (e.SelectedItem == null) return; // Asegurarse de que haya un usuario seleccionado
+
         _selectedUser = e.SelectedItem as User;
         if (_selectedUser != null)
         {
             UsernameEntry.Text = _selectedUser.Username;
-            PasswordEntry.Text = string.Empty; // No se muestra la contraseña
+            PasswordEntry.Text = string.Empty; // La contraseña no se muestra
             RolePicker.SelectedItem = _selectedUser.Role.RoleName;
         }
     }

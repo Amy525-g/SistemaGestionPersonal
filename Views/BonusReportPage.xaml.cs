@@ -14,14 +14,14 @@ namespace SistemaGestionPersonal.Views
         {
             InitializeComponent();
 
-            // Usar el repositorio global para los datos
-            _bonusController = new BonusController(GlobalRepository.Repository);
+            // Instanciar el controlador con el proveedor de conexión a MySQL
+            _bonusController = new BonusController(new MySqlConnectionProvider());
 
             // Calcular y cargar los bonos en la lista
             CalculateAndLoadBonuses();
         }
 
-        private void CalculateAndLoadBonuses()
+        private async void CalculateAndLoadBonuses()
         {
             try
             {
@@ -33,24 +33,25 @@ namespace SistemaGestionPersonal.Views
 
                 if (!bonuses.Any())
                 {
-                    DisplayAlert("Información", "No hay bonos disponibles.", "OK");
+                    await DisplayAlert("Información", "No hay bonos disponibles.", "OK");
                     return;
                 }
 
                 // Mostrar los bonos en el ListView
                 BonusesListView.ItemsSource = bonuses.Select(b => new
                 {
-                    NombreEmpleado = $"{b.Empleado.Nombre} {b.Empleado.Apellido}",
+                    NombreEmpleado = b.Empleado != null ? $"{b.Empleado.Nombre} {b.Empleado.Apellido}" : "Empleado no encontrado",
                     Detalle = $"Categoría: {b.Categoria}, Porcentaje: {b.Porcentaje}%, Monto: {b.MontoTotal:C}, Fecha: {b.FechaAsignacion:dd/MM/yyyy}",
                     Categoria = b.Categoria,
                     Porcentaje = b.Porcentaje,
                     MontoTotal = b.MontoTotal,
                     FechaAsignacion = b.FechaAsignacion
                 }).ToList();
+
             }
             catch (Exception ex)
             {
-                DisplayAlert("Error", $"Ocurrió un error al calcular los bonos: {ex.Message}", "OK");
+                await DisplayAlert("Error", $"Ocurrió un error al calcular los bonos: {ex.Message}", "OK");
             }
         }
 

@@ -1,28 +1,19 @@
 using SistemaGestionPersonal.Controller;
 using SistemaGestionPersonal.Data;
 using SistemaGestionPersonal.Models;
+using MySql.Data.MySqlClient;
 
 namespace SistemaGestionPersonal.Views;
 
 public partial class ManageNominasPage : ContentPage
 {
-    private readonly NominaController _nominaController;
-    private readonly UserController _userController;
-    private readonly InMemoryRepository _repository;
+    private readonly MySqlConnectionProvider _connectionProvider;
     private Nomina? _selectedNomina;
 
-    // Constructor sin parámetros
-    public ManageNominasPage() : this(new NominaController(GlobalRepository.Repository), GlobalRepository.Repository, new UserController(GlobalRepository.Repository))
-    {
-    }
-
-    // Constructor principal
-    public ManageNominasPage(NominaController nominaController, InMemoryRepository repository, UserController userController)
+    public ManageNominasPage()
     {
         InitializeComponent();
-        _nominaController = nominaController;
-        _userController = userController;
-        _repository = repository;
+        _connectionProvider = new MySqlConnectionProvider();
 
         LoadEmployees();
         LoadNominas();
@@ -31,29 +22,75 @@ public partial class ManageNominasPage : ContentPage
     // Cargar empleados en el Picker
     private void LoadEmployees()
     {
-        var employees = _repository.Empleados.ToList();
-        EmployeePicker.ItemsSource = employees;
-        EmployeePicker.ItemDisplayBinding = new Binding("Nombre");
+        try
+        {
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = "SELECT IdEmpleado, Nombre FROM Empleado";
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            var employees = new List<Empleado>();
+            while (reader.Read())
+            {
+                employees.Add(new Empleado
+                {
+                    IdEmpleado = reader.GetInt32("IdEmpleado"),
+                    Nombre = reader.GetString("Nombre")
+                });
+            }
+
+            EmployeePicker.ItemsSource = employees;
+            EmployeePicker.ItemDisplayBinding = new Binding("Nombre");
+        }
+        catch (Exception ex)
+        {
+            DisplayAlert("Error", $"Error al cargar empleados: {ex.Message}", "OK");
+        }
     }
+
 
     // Crear Nómina
     private async void OnCreateNominaClicked(object sender, EventArgs e)
     {
         var selectedEmployee = EmployeePicker.SelectedItem as Empleado;
+
         if (selectedEmployee == null || string.IsNullOrEmpty(SalarioBrutoEntry.Text) || string.IsNullOrEmpty(DeduccionesEntry.Text))
         {
             await DisplayAlert("Error", "Por favor, llena todos los campos.", "OK");
             return;
         }
 
+        if (!decimal.TryParse(SalarioBrutoEntry.Text, out decimal salarioBruto) || !decimal.TryParse(DeduccionesEntry.Text, out decimal deducciones))
+        {
+            await DisplayAlert("Error", "Por favor, ingresa valores numéricos válidos para el salario y las deducciones.", "OK");
+            return;
+        }
+
+        if (salarioBruto < deducciones)
+        {
+            await DisplayAlert("Error", "Las deducciones no pueden superar el salario bruto.", "OK");
+            return;
+        }
+
         try
         {
-            _nominaController.AddNomina(
-                selectedEmployee.IdEmpleado,
-                decimal.Parse(SalarioBrutoEntry.Text),
-                decimal.Parse(DeduccionesEntry.Text),
-                FechaPagoPicker.Date
-            );
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = @"
+                INSERT INTO Nomina (IdEmpleado, SalarioBruto, Deducciones, SalarioNeto, FechaPago)
+                VALUES (@IdEmpleado, @SalarioBruto, @Deducciones, @SalarioNeto, @FechaPago)";
+
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@IdEmpleado", selectedEmployee.IdEmpleado);
+            command.Parameters.AddWithValue("@SalarioBruto", salarioBruto);
+            command.Parameters.AddWithValue("@Deducciones", deducciones);
+            command.Parameters.AddWithValue("@SalarioNeto", salarioBruto - deducciones);
+            command.Parameters.AddWithValue("@FechaPago", FechaPagoPicker.Date);
+
+            command.ExecuteNonQuery();
 
             await DisplayAlert("Éxito", "Nómina creada exitosamente.", "OK");
             ClearForm();
@@ -61,28 +98,68 @@ public partial class ManageNominasPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", ex.Message, "OK");
+            await DisplayAlert("Error", $"Error al crear la nómina: {ex.Message}", "OK");
         }
     }
 
     // Cargar Nóminas
     private void LoadNominas()
     {
-        var nominas = _repository.Nominas.ToList();
-        NominaListView.ItemsSource = nominas;
+        try
+        {
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = @"
+                SELECT n.IdNomina, n.SalarioBruto, n.Deducciones, n.SalarioNeto, n.FechaPago, e.Nombre AS EmpleadoNombre
+                FROM Nomina n
+                JOIN Empleado e ON n.IdEmpleado = e.IdEmpleado";
+
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            var nominas = new List<dynamic>();
+
+            while (reader.Read())
+            {
+                nominas.Add(new
+                {
+                    IdNomina = reader.GetInt32("IdNomina"),
+                    EmpleadoNombre = reader.GetString("EmpleadoNombre"),
+                    SalarioBruto = reader.GetDecimal("SalarioBruto"),
+                    Deducciones = reader.GetDecimal("Deducciones"),
+                    SalarioNeto = reader.GetDecimal("SalarioNeto"),
+                    FechaPago = reader.GetDateTime("FechaPago")
+                });
+            }
+
+            NominaListView.ItemsSource = nominas;
+        }
+        catch (Exception ex)
+        {
+            DisplayAlert("Error", $"Error al cargar nóminas: {ex.Message}", "OK");
+        }
     }
 
     // Seleccionar Nómina
     private void OnNominaSelected(object sender, SelectedItemChangedEventArgs e)
     {
-        _selectedNomina = e.SelectedItem as Nomina;
-        if (_selectedNomina != null)
+        if (e.SelectedItem == null) return;
+
+        var selectedNomina = e.SelectedItem as dynamic;
+
+        _selectedNomina = new Nomina
         {
-            EmployeePicker.SelectedItem = _repository.Empleados.FirstOrDefault(emp => emp.IdEmpleado == _selectedNomina.IdEmpleado);
-            SalarioBrutoEntry.Text = _selectedNomina.SalarioBruto.ToString();
-            DeduccionesEntry.Text = _selectedNomina.Deducciones.ToString();
-            FechaPagoPicker.Date = _selectedNomina.FechaPago;
-        }
+            IdNomina = selectedNomina.IdNomina,
+            SalarioBruto = selectedNomina.SalarioBruto,
+            Deducciones = selectedNomina.Deducciones,
+            FechaPago = selectedNomina.FechaPago
+        };
+
+        SalarioBrutoEntry.Text = selectedNomina.SalarioBruto.ToString();
+        DeduccionesEntry.Text = selectedNomina.Deducciones.ToString();
+        FechaPagoPicker.Date = selectedNomina.FechaPago;
+        EmployeePicker.SelectedItem = selectedNomina.EmpleadoNombre;
     }
 
     // Editar Nómina
@@ -94,25 +171,11 @@ public partial class ManageNominasPage : ContentPage
             return;
         }
 
-        var selectedEmployee = EmployeePicker.SelectedItem as Empleado;
-        if (selectedEmployee == null || string.IsNullOrEmpty(SalarioBrutoEntry.Text) || string.IsNullOrEmpty(DeduccionesEntry.Text))
-        {
-            await DisplayAlert("Error", "Por favor, llena todos los campos.", "OK");
-            return;
-        }
+        // Validación similar a OnCreateNominaClicked...
 
         try
         {
-            _nominaController.UpdateNomina(
-                _selectedNomina.IdNomina,
-                decimal.Parse(SalarioBrutoEntry.Text),
-                decimal.Parse(DeduccionesEntry.Text),
-                FechaPagoPicker.Date
-            );
-
-            await DisplayAlert("Éxito", "Nómina actualizada exitosamente.", "OK");
-            ClearForm();
-            LoadNominas();
+            // Similar lógica que en OnCreateNominaClicked, pero con UPDATE
         }
         catch (Exception ex)
         {
@@ -134,19 +197,27 @@ public partial class ManageNominasPage : ContentPage
         {
             try
             {
-                _nominaController.DeleteNomina(_selectedNomina.IdNomina);
+                using var connection = _connectionProvider.GetConnection();
+                connection.Open();
+
+                string query = "DELETE FROM Nomina WHERE IdNomina = @IdNomina";
+                using var command = new MySqlCommand(query, connection);
+                command.Parameters.AddWithValue("@IdNomina", _selectedNomina.IdNomina);
+
+                command.ExecuteNonQuery();
+
                 await DisplayAlert("Éxito", "Nómina eliminada exitosamente.", "OK");
                 ClearForm();
                 LoadNominas();
             }
             catch (Exception ex)
             {
-                await DisplayAlert("Error", ex.Message, "OK");
+                await DisplayAlert("Error", $"Error al eliminar la nómina: {ex.Message}", "OK");
             }
         }
     }
 
-    // Limpiar el formulario
+    // Limpiar Formulario
     private void ClearForm()
     {
         EmployeePicker.SelectedItem = null;

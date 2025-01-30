@@ -2,28 +2,50 @@
 using SistemaGestionPersonal.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
+using MySql.Data.MySqlClient;
 
 namespace SistemaGestionPersonal.Controller
 {
     public class BonusController
     {
-        private readonly InMemoryRepository _repository;
+        private readonly MySqlConnectionProvider _connectionProvider;
 
-        public BonusController(InMemoryRepository repository)
+        public BonusController(MySqlConnectionProvider connectionProvider)
         {
-            _repository = repository;
+            _connectionProvider = connectionProvider;
         }
 
         private Dictionary<int, int> GetLatestEvaluationScores()
         {
-            return _repository.EvaluacionesDesempeno
-                .GroupBy(e => e.IdEmpleado)
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.OrderByDescending(e => e.FechaEvaluacion).First().Puntuacion
-                );
+            var evaluationScores = new Dictionary<int, int>();
+
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = @"
+                SELECT IdEmpleado, Puntuacion
+                FROM EvaluacionDesempeno ed
+                WHERE FechaEvaluacion = (
+                    SELECT MAX(FechaEvaluacion)
+                    FROM EvaluacionDesempeno
+                    WHERE IdEmpleado = ed.IdEmpleado
+                )";
+
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var idEmpleado = reader.GetInt32("IdEmpleado");
+                var puntuacion = reader.GetInt32("Puntuacion");
+                evaluationScores[idEmpleado] = puntuacion;
+            }
+
+            return evaluationScores;
         }
+
 
         private (string categoria, decimal porcentaje) GetBonusCategoryAndPercentage(int puntuacion)
         {
@@ -42,52 +64,99 @@ namespace SistemaGestionPersonal.Controller
         {
             var evaluationScores = GetLatestEvaluationScores();
 
-            foreach (var empleado in _repository.Empleados)
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            foreach (var empleadoId in evaluationScores.Keys)
             {
-                if (!evaluationScores.ContainsKey(empleado.IdEmpleado))
+                var puntuacion = evaluationScores[empleadoId];
+
+                // Obtener contrato del empleado
+                string contratoQuery = "SELECT IdEmpleado FROM Contrato WHERE IdEmpleado = @IdEmpleado";
+                using var contratoCmd = new MySqlCommand(contratoQuery, connection);
+                contratoCmd.Parameters.AddWithValue("@IdEmpleado", empleadoId);
+
+                var contratoResult = contratoCmd.ExecuteScalar();
+                if (contratoResult == null)
                 {
-                    continue; 
+                    continue; // No tiene contrato asociado
                 }
 
-                var puntuacion = evaluationScores[empleado.IdEmpleado];
-                var contrato = _repository.Contratos.FirstOrDefault(c => c.IdEmpleado == empleado.IdEmpleado);
-                if (contrato == null)
+                // Obtener nómina del empleado
+                string nominaQuery = "SELECT SalarioNeto FROM Nomina WHERE IdEmpleado = @IdEmpleado";
+                using var nominaCmd = new MySqlCommand(nominaQuery, connection);
+                nominaCmd.Parameters.AddWithValue("@IdEmpleado", empleadoId);
+
+                var salarioNetoResult = nominaCmd.ExecuteScalar();
+                if (salarioNetoResult == null || Convert.ToDecimal(salarioNetoResult) <= 0)
                 {
-                    continue; 
+                    continue; // No tiene nómina asociada o salario es inválido
                 }
 
-                var nomina = _repository.Nominas.FirstOrDefault(n => n.IdEmpleado == empleado.IdEmpleado);
-                if (nomina == null || nomina.SalarioNeto <= 0)
-                {
-                    continue; 
-                }
+                var salarioNeto = Convert.ToDecimal(salarioNetoResult);
 
                 var (categoria, porcentaje) = GetBonusCategoryAndPercentage(puntuacion);
                 if (porcentaje == 0)
                 {
-                    continue; 
+                    continue; // No aplica para bono
                 }
 
-                var montoTotal = nomina.SalarioNeto * porcentaje / 100;
+                var montoTotal = salarioNeto * porcentaje / 100;
 
-                var bono = new Bono
-                {
-                    IdBono = _repository.Bonos.Count + 1,
-                    IdEmpleado = empleado.IdEmpleado,
-                    Categoria = categoria,
-                    Porcentaje = porcentaje,
-                    FechaAsignacion = DateTime.Now,
-                    MontoTotal = montoTotal,
-                    Empleado = empleado
-                };
+                // Insertar bono en la base de datos
+                string insertBonoQuery = @"
+                    INSERT INTO Bono (IdEmpleado, Categoria, Porcentaje, FechaAsignacion, MontoTotal)
+                    VALUES (@IdEmpleado, @Categoria, @Porcentaje, @FechaAsignacion, @MontoTotal)";
 
-                _repository.Bonos.Add(bono);
+                using var insertCmd = new MySqlCommand(insertBonoQuery, connection);
+                insertCmd.Parameters.AddWithValue("@IdEmpleado", empleadoId);
+                insertCmd.Parameters.AddWithValue("@Categoria", categoria);
+                insertCmd.Parameters.AddWithValue("@Porcentaje", porcentaje);
+                insertCmd.Parameters.AddWithValue("@FechaAsignacion", DateTime.Now);
+                insertCmd.Parameters.AddWithValue("@MontoTotal", montoTotal);
+
+                insertCmd.ExecuteNonQuery();
             }
         }
 
         public List<Bono> GetBonuses()
         {
-            return _repository.Bonos.ToList();
+            var bonuses = new List<Bono>();
+
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
+
+            string query = @"
+        SELECT b.*, e.Nombre, e.Apellido
+        FROM Bono b
+        JOIN Empleado e ON b.IdEmpleado = e.IdEmpleado";
+
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var bono = new Bono
+                {
+                    IdBono = reader.GetInt32("IdBono"),
+                    IdEmpleado = reader.GetInt32("IdEmpleado"),
+                    Categoria = reader.GetString("Categoria"),
+                    Porcentaje = reader.GetDecimal("Porcentaje"),
+                    FechaAsignacion = reader.GetDateTime("FechaAsignacion"),
+                    MontoTotal = reader.GetDecimal("MontoTotal"),
+                    Empleado = new Empleado
+                    {
+                        IdEmpleado = reader.GetInt32("IdEmpleado"),
+                        Nombre = reader.GetString("Nombre"),
+                        Apellido = reader.GetString("Apellido")
+                    }
+                };
+
+                bonuses.Add(bono);
+            }
+
+            return bonuses;
         }
+
     }
 }

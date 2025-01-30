@@ -1,23 +1,20 @@
+using SistemaGestionPersonal.Controller;
 using SistemaGestionPersonal.Data;
+using MySql.Data.MySqlClient;
+using System;
+using System.Linq;
 
 namespace SistemaGestionPersonal.Views;
 
 public partial class GenerateReportsPage : ContentPage
 {
-    private readonly InMemoryRepository _repository;
+    private readonly MySqlConnectionProvider _connectionProvider;
 
     public GenerateReportsPage()
     {
         InitializeComponent();
-        // Usar el repositorio global para garantizar la persistencia de datos
-        _repository = GlobalRepository.Repository;
-    }
-
-    public GenerateReportsPage(InMemoryRepository repository)
-    {
-        InitializeComponent();
-        // Usar el repositorio global, ignorando el parámetro del constructor
-        _repository = GlobalRepository.Repository;
+        // Inicializar el proveedor de conexión
+        _connectionProvider = new MySqlConnectionProvider();
     }
 
     // Generar Reporte
@@ -32,20 +29,31 @@ public partial class GenerateReportsPage : ContentPage
         string reportType = ReportTypePicker.SelectedItem.ToString();
         string reportContent = string.Empty;
 
-        switch (reportType)
+        try
         {
-            case "Evaluaciones de Desempeño":
-                reportContent = GeneratePerformanceEvaluationReport();
-                break;
-            case "Nóminas":
-                reportContent = GeneratePayrollReport();
-                break;
-            case "Contratos":
-                reportContent = GenerateContractsReport();
-                break;
-            default:
-                reportContent = "Tipo de reporte no válido.";
-                break;
+            switch (reportType)
+            {
+                case "Evaluaciones de Desempeño":
+                    reportContent = GeneratePerformanceEvaluationReport();
+                    break;
+                case "Nóminas":
+                    reportContent = GeneratePayrollReport();
+                    break;
+                case "Contratos":
+                    reportContent = GenerateContractsReport();
+                    break;
+                default:
+                    reportContent = "Tipo de reporte no válido.";
+                    break;
+            }
+        }
+        catch (MySqlException sqlEx)
+        {
+            reportContent = $"Error en la base de datos: {sqlEx.Message}";
+        }
+        catch (Exception ex)
+        {
+            reportContent = $"Error al generar el reporte: {ex.Message}";
         }
 
         ReportPreviewEditor.Text = reportContent;
@@ -54,9 +62,27 @@ public partial class GenerateReportsPage : ContentPage
     // Generar reporte de evaluaciones de desempeño
     private string GeneratePerformanceEvaluationReport()
     {
-        var evaluations = _repository.EvaluacionesDesempeno
-            .Select(e => $"Empleado: {e.Empleado.Nombre}, Puntuación: {e.Puntuacion}, Fecha: {e.FechaEvaluacion.ToShortDateString()}")
-            .ToList();
+        var evaluations = new List<string>();
+
+        using var connection = _connectionProvider.GetConnection();
+        connection.Open();
+
+        string query = @"
+            SELECT e.Nombre, ed.Puntuacion, ed.FechaEvaluacion
+            FROM EvaluacionDesempeno ed
+            JOIN Empleado e ON ed.IdEmpleado = e.IdEmpleado";
+
+        using var command = new MySqlCommand(query, connection);
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            string nombre = reader.GetString("Nombre");
+            int puntuacion = reader.GetInt32("Puntuacion");
+            DateTime fechaEvaluacion = reader.GetDateTime("FechaEvaluacion");
+
+            evaluations.Add($"Empleado: {nombre}, Puntuación: {puntuacion}, Fecha: {fechaEvaluacion.ToShortDateString()}");
+        }
 
         return evaluations.Any()
             ? string.Join(Environment.NewLine, evaluations)
@@ -66,9 +92,27 @@ public partial class GenerateReportsPage : ContentPage
     // Generar reporte de nóminas
     private string GeneratePayrollReport()
     {
-        var payrolls = _repository.Nominas
-            .Select(n => $"Empleado: {n.Empleado.Nombre}, Salario Neto: {n.SalarioNeto}, Fecha de Pago: {n.FechaPago.ToShortDateString()}")
-            .ToList();
+        var payrolls = new List<string>();
+
+        using var connection = _connectionProvider.GetConnection();
+        connection.Open();
+
+        string query = @"
+            SELECT e.Nombre, n.SalarioNeto, n.FechaPago
+            FROM Nomina n
+            JOIN Empleado e ON n.IdEmpleado = e.IdEmpleado";
+
+        using var command = new MySqlCommand(query, connection);
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            string nombre = reader.GetString("Nombre");
+            decimal salarioNeto = reader.GetDecimal("SalarioNeto");
+            DateTime fechaPago = reader.GetDateTime("FechaPago");
+
+            payrolls.Add($"Empleado: {nombre}, Salario Neto: {salarioNeto:C}, Fecha de Pago: {fechaPago.ToShortDateString()}");
+        }
 
         return payrolls.Any()
             ? string.Join(Environment.NewLine, payrolls)
@@ -78,9 +122,28 @@ public partial class GenerateReportsPage : ContentPage
     // Generar reporte de contratos
     private string GenerateContractsReport()
     {
-        var contracts = _repository.Contratos
-            .Select(c => $"Empleado: {c.Empleado.Nombre}, Tipo: {c.TipoContrato}, Desde: {c.FechaInicio.ToShortDateString()} Hasta: {c.FechaFin.ToShortDateString()}")
-            .ToList();
+        var contracts = new List<string>();
+
+        using var connection = _connectionProvider.GetConnection();
+        connection.Open();
+
+        string query = @"
+            SELECT e.Nombre, c.TipoContrato, c.FechaInicio, c.FechaFin
+            FROM Contrato c
+            JOIN Empleado e ON c.IdEmpleado = e.IdEmpleado";
+
+        using var command = new MySqlCommand(query, connection);
+        using var reader = command.ExecuteReader();
+
+        while (reader.Read())
+        {
+            string nombre = reader.GetString("Nombre");
+            string tipoContrato = reader.GetString("TipoContrato");
+            DateTime fechaInicio = reader.GetDateTime("FechaInicio");
+            DateTime fechaFin = reader.GetDateTime("FechaFin");
+
+            contracts.Add($"Empleado: {nombre}, Tipo: {tipoContrato}, Desde: {fechaInicio.ToShortDateString()} Hasta: {fechaFin.ToShortDateString()}");
+        }
 
         return contracts.Any()
             ? string.Join(Environment.NewLine, contracts)

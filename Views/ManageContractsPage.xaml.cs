@@ -1,27 +1,21 @@
 using SistemaGestionPersonal.Controller;
 using SistemaGestionPersonal.Data;
 using SistemaGestionPersonal.Models;
+using MySql.Data.MySqlClient;
 
 namespace SistemaGestionPersonal.Views;
 
 public partial class ManageContractsPage : ContentPage
 {
     private readonly ContractController _contractController;
-    private readonly UserController _userController;
-    private readonly InMemoryRepository _repository;
+    private readonly MySqlConnectionProvider _connectionProvider;
     private Contrato _selectedContract;
 
-    // Constructor sin parámetros
-    public ManageContractsPage() : this(new ContractController(GlobalRepository.Repository), new UserController(GlobalRepository.Repository))
-    {
-    }
-
-    public ManageContractsPage(ContractController contractController, UserController userController)
+    public ManageContractsPage()
     {
         InitializeComponent();
-        _contractController = contractController;
-        _userController = userController;
-        _repository = GlobalRepository.Repository;
+        _connectionProvider = new MySqlConnectionProvider();
+        _contractController = new ContractController(_connectionProvider);
 
         LoadEmployees();
         LoadContracts();
@@ -30,17 +24,38 @@ public partial class ManageContractsPage : ContentPage
     // Cargar empleados en el Picker
     private void LoadEmployees()
     {
-        var employees = _repository.Empleados
-            .Where(e => _repository.Users.Any(u => u.UserID == e.UserID && u.Role.RoleName == "Employee"))
-            .ToList();
-
-        if (!employees.Any())
+        try
         {
-            DisplayAlert("Advertencia", "No se encontraron empleados disponibles.", "OK");
-        }
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
 
-        EmployeePicker.ItemsSource = employees;
-        EmployeePicker.ItemDisplayBinding = new Binding("Nombre");
+            string query = "SELECT IdEmpleado, Nombre FROM Empleado";
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            var employees = new List<Empleado>();
+
+            while (reader.Read())
+            {
+                employees.Add(new Empleado
+                {
+                    IdEmpleado = reader.GetInt32("IdEmpleado"),
+                    Nombre = reader.GetString("Nombre")
+                });
+            }
+
+            if (!employees.Any())
+            {
+                DisplayAlert("Advertencia", "No se encontraron empleados disponibles.", "OK");
+            }
+
+            EmployeePicker.ItemsSource = employees;
+            EmployeePicker.ItemDisplayBinding = new Binding("Nombre");
+        }
+        catch (MySqlException ex)
+        {
+            DisplayAlert("Error", $"Error al cargar empleados: {ex.Message}", "OK");
+        }
     }
 
     // Crear Contrato
@@ -72,6 +87,10 @@ public partial class ManageContractsPage : ContentPage
             ClearForm();
             LoadContracts();
         }
+        catch (MySqlException ex)
+        {
+            await DisplayAlert("Error", $"Error al crear contrato: {ex.Message}", "OK");
+        }
         catch (Exception ex)
         {
             await DisplayAlert("Error", ex.Message, "OK");
@@ -81,36 +100,65 @@ public partial class ManageContractsPage : ContentPage
     // Cargar contratos en el ListView
     private void LoadContracts()
     {
-        var contracts = _repository.Contratos
-            .Select(c => new
-            {
-                c.IdContrato,
-                EmpleadoNombre = _repository.Empleados.FirstOrDefault(e => e.IdEmpleado == c.IdEmpleado)?.Nombre ?? "No encontrado",
-                c.TipoContrato,
-                c.FechaInicio,
-                c.FechaFin
-            })
-            .ToList();
+        try
+        {
+            using var connection = _connectionProvider.GetConnection();
+            connection.Open();
 
-        ContractListView.ItemsSource = contracts;
+            string query = @"
+                SELECT c.IdContrato, c.TipoContrato, c.FechaInicio, c.FechaFin, e.Nombre AS EmpleadoNombre
+                FROM Contrato c
+                JOIN Empleado e ON c.IdEmpleado = e.IdEmpleado";
+
+            using var command = new MySqlCommand(query, connection);
+            using var reader = command.ExecuteReader();
+
+            var contracts = new List<dynamic>();
+
+            while (reader.Read())
+            {
+                contracts.Add(new
+                {
+                    IdContrato = reader.GetInt32("IdContrato"),
+                    EmpleadoNombre = reader.GetString("EmpleadoNombre"),
+                    TipoContrato = reader.GetString("TipoContrato"),
+                    FechaInicio = reader.GetDateTime("FechaInicio"),
+                    FechaFin = reader.GetDateTime("FechaFin")
+                });
+            }
+
+            ContractListView.ItemsSource = contracts;
+        }
+        catch (MySqlException ex)
+        {
+            DisplayAlert("Error", $"Error al cargar contratos: {ex.Message}", "OK");
+        }
     }
 
     // Seleccionar Contrato
     private void OnContractSelected(object sender, SelectedItemChangedEventArgs e)
     {
-        if (e.SelectedItem is not Contrato selectedContract)
+        if (e.SelectedItem == null)
         {
             _selectedContract = null;
             return;
         }
 
-        _selectedContract = selectedContract;
+        var selectedContract = e.SelectedItem as dynamic;
 
-        var selectedEmployee = _repository.Empleados.FirstOrDefault(e => e.IdEmpleado == _selectedContract.IdEmpleado);
-        EmployeePicker.SelectedItem = selectedEmployee;
-        StartDatePicker.Date = _selectedContract.FechaInicio;
-        EndDatePicker.Date = _selectedContract.FechaFin;
-        ContractTypePicker.SelectedItem = _selectedContract.TipoContrato;
+        _selectedContract = new Contrato
+        {
+            IdContrato = selectedContract.IdContrato,
+            IdEmpleado = EmployeePicker.SelectedIndex,
+            TipoContrato = selectedContract.TipoContrato,
+            FechaInicio = selectedContract.FechaInicio,
+            FechaFin = selectedContract.FechaFin
+        };
+
+        EmployeePicker.SelectedItem = selectedContract.EmpleadoNombre;
+        StartDatePicker.Date = selectedContract.FechaInicio;
+        EndDatePicker.Date = selectedContract.FechaFin;
+        ContractTypePicker.SelectedItem = selectedContract.TipoContrato;
     }
 
     // Editar Contrato
@@ -149,15 +197,20 @@ public partial class ManageContractsPage : ContentPage
             ClearForm();
             LoadContracts();
         }
-        catch (Exception ex)
+        catch (MySqlException ex)
         {
-            await DisplayAlert("Error", ex.Message, "OK");
+            await DisplayAlert("Error", $"Error al actualizar contrato: {ex.Message}", "OK");
         }
     }
 
     // Eliminar Contrato
     private async void OnDeleteContractClicked(object sender, EventArgs e)
     {
+        if (_selectedContract == null)
+        {
+            await DisplayAlert("Error", "Selecciona un contrato para eliminar.", "OK");
+            return;
+        }
 
         bool confirm = await DisplayAlert("Confirmación", "¿Estás seguro de que deseas eliminar este contrato?", "Sí", "No");
         if (confirm)
@@ -169,16 +222,10 @@ public partial class ManageContractsPage : ContentPage
                 ClearForm();
                 LoadContracts();
             }
-            catch (Exception ex)
+            catch (MySqlException ex)
             {
-                await DisplayAlert("Error", ex.Message, "OK");
+                await DisplayAlert("Error", $"Error al eliminar contrato: {ex.Message}", "OK");
             }
-        }
-
-        if (_selectedContract == null)
-        {
-            await DisplayAlert("Error", "Selecciona un contrato para eliminar.", "OK");
-            return;
         }
     }
 

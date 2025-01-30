@@ -3,21 +3,23 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="SistemaGestionPersonal.Views.PerformancePage"
              Title="Evaluaciones de Desempeño">
-    <StackLayout Padding="10">
-        <Label Text="Evaluaciones de Desempeño" FontSize="Large" HorizontalOptions="Center" />
+    <ScrollView>
+        <StackLayout Padding="10">
+            <Label Text="Evaluaciones de Desempeño" FontSize="Large" HorizontalOptions="Center" />
 
-        <!-- Lista de Evaluaciones -->
-        <Label Text="Tus Evaluaciones" FontAttributes="Bold" FontSize="Medium" Margin="0,10,0,10" />
-        <ListView x:Name="EvaluationListView" SelectionMode="Single" ItemSelected="OnEvaluationSelected">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <TextCell Text="{Binding FechaEvaluacion, StringFormat='Fecha: {0:dd/MM/yyyy}'}" 
-                              Detail="{Binding Puntuacion, StringFormat='Puntuación: {0}'}" />
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
+            <!-- Lista de Evaluaciones -->
+            <Label Text="Tus Evaluaciones" FontAttributes="Bold" FontSize="Medium" Margin="0,10,0,10" />
+            <ListView x:Name="EvaluationListView" SelectionMode="Single" ItemSelected="OnEvaluationSelected">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <TextCell Text="{Binding FechaEvaluacion, StringFormat='Fecha: {0:dd/MM/yyyy}'}" 
+                          Detail="{Binding Puntuacion, StringFormat='Puntuación: {0}'}" />
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <!-- Botón de regresar -->
-        <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="Black" TextColor="White" Margin="0,20,0,0" />
-    </StackLayout>
+            <!-- Botón de regresar -->
+            <Button Text="Regresar" Clicked="OnBackButtonClicked" BackgroundColor="Black" TextColor="White" Margin="0,20,0,0" />
+        </StackLayout>
+    </ScrollView>
 </ContentPage>
